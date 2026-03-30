@@ -1,0 +1,520 @@
+// ──────────────────────────────────────────────────────────────────────────────
+// Point of Purchase Terminal — Odoo Native Theme
+// Uses Bootstrap 5 variables and standard Odoo SCSS patterns.
+// ──────────────────────────────────────────────────────────────────────────────
+
+.o_purchase_pop {
+    background-color: var(--o-view-background-color, $o-view-background-color);
+    overflow: hidden;
+}
+
+// ── Fullscreen Mode ──
+body.o_pop_fullscreen {
+    .o_main_navbar,
+    .o_burger_menu_content {
+        display: none !important;
+    }
+    .o_action_manager {
+        top: 0 !important;
+        height: 100vh !important;
+    }
+}
+
+// ── Header ──
+.o_pop_header_select {
+    max-width: 220px;
+    min-width: 160px;
+}
+
+// ── Category Sidebar ──
+.o_pop_sidebar {
+    width: 240px;
+    min-width: 240px;
+}
+
+.o_pop_cat_btn {
+    color: var(--bs-body-color, $body-color);
+    background-color: transparent;
+    transition: background-color 0.15s, color 0.15s;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+
+    &:hover {
+        background-color: var(--bs-tertiary-bg, $gray-100);
+    }
+
+    &.active {
+        background-color: rgba($o-brand-primary, 0.08);
+        color: $o-brand-primary;
+        border-color: rgba($o-brand-primary, 0.15);
+        font-weight: 600;
+    }
+}
+
+// ── Category Tree ──
+.o_pop_tree_chevron {
+    cursor: pointer;
+    color: var(--bs-secondary-color, $gray-500);
+    font-size: 0.75rem;
+    width: 1.25rem;
+    flex-shrink: 0;
+    text-align: center;
+    transition: color 0.15s;
+
+    &:hover {
+        color: $o-brand-primary;
+    }
+}
+
+// ── Basket Panel ──
+.o_pop_basket_panel {
+    width: 340px;
+    min-width: 340px;
+}
+
+// ── Product Cards ──
+.o_pop_card_wrapper {
+    position: relative;
+}
+
+.o_pop_product_card {
+    width: 14rem;
+    min-height: 10rem;
+    border-radius: 0.5rem;
+    background-color: var(--bs-body-bg, $white);
+    border: 1px solid var(--bs-border-color, $border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    text-align: left;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.1s;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.75rem rgba($black, 0.06);
+    }
+
+    &.active {
+        border: 2px solid $o-brand-primary;
+        box-shadow: 0 0 0 2px rgba($o-brand-primary, 0.15);
+    }
+}
+
+.o_pop_product_name {
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+    font-size: 0.85rem;
+}
+
+.o_pop_card_badge {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background-color: $o-brand-primary;
+    color: $white;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba($black, 0.2);
+    padding: 0 0.375rem;
+    z-index: 5;
+}
+
+// ── Product Card Image ──
+.o_pop_card_img_wrap {
+    width: 100%;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    background-color: var(--bs-tertiary-bg, $gray-100);
+    border-radius: 0.375rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.o_pop_card_img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.o_pop_card_img_placeholder {
+    color: var(--bs-secondary-color, $gray-400);
+    font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.o_pop_price {
+    color: $o-brand-primary;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+// ── Purchase History Tooltip ──
+.o_pop_history_tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1060;
+    width: 280px;
+    margin-top: 0.375rem;
+    background-color: var(--bs-body-bg, $white);
+    border: 1px solid var(--bs-border-color, $border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba($black, 0.15);
+    animation: o_pop_fade_in 0.15s ease;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.o_pop_history_header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color, $gray-500);
+    border-bottom: 1px solid var(--bs-border-color, $border-color);
+    background-color: var(--bs-tertiary-bg, $gray-100);
+}
+
+.o_pop_history_summary {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--bs-border-color, $border-color);
+    line-height: 1.5;
+}
+
+// ── Order Lines ──
+.o_pop_order_line {
+    transition: background-color 0.1s, border-color 0.1s, transform 0.2s ease;
+
+    &:hover {
+        background-color: var(--bs-tertiary-bg, $gray-100) !important;
+    }
+}
+
+.o_pop_line_selected {
+    background-color: rgba($o-brand-primary, 0.06) !important;
+}
+
+.o_pop_line_warning {
+    border-color: $warning !important;
+    background-color: rgba($warning, 0.06) !important;
+}
+
+.o_pop_min_qty_warn {
+    color: $warning;
+    font-weight: 600;
+}
+
+// ── Swipe to Delete ──
+.o_pop_swipe_container {
+    position: relative;
+    overflow: hidden;
+}
+
+.o_pop_line_swiped {
+    transform: translateX(-70px);
+}
+
+.o_pop_swipe_delete {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 70px;
+    margin-bottom: 0.5rem;
+    border-radius: 0 0.375rem 0.375rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: o_pop_swipe_reveal 0.2s ease;
+}
+
+@keyframes o_pop_swipe_reveal {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+// ── Numpad ──
+.o_pop_numpad {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease-in-out;
+    background-color: var(--bs-tertiary-bg, $gray-100);
+    flex-shrink: 0;
+
+    &.o_pop_numpad_open {
+        max-height: 400px;
+    }
+}
+
+.o_pop_numpad_grid {
+    gap: 1px;
+    grid-template-columns: repeat(3, 1fr);
+    background-color: var(--bs-border-color, $gray-300);
+    padding: 1px;
+}
+
+.o_pop_numpad_wide {
+    grid-column: span 3;
+}
+
+// ── Premium Keyboard Hints ──
+kbd {
+    .o_purchase_pop & {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.15rem 0.4rem;
+        margin: 0 0.1rem;
+        color: var(--bs-body-color, #333);
+        background-color: var(--bs-secondary-bg, #f8f9fa);
+        border: 1px solid var(--bs-border-color, #dee2e6);
+        border-bottom-width: 2px;
+        border-radius: 0.3rem;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        vertical-align: middle;
+        line-height: 1;
+    }
+}
+
+// ── Confirmation Dialog ──
+.o_pop_dialog_overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    background-color: rgba($black, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: o_pop_fade_in 0.15s ease;
+}
+
+.o_pop_dialog {
+    background-color: var(--bs-body-bg, $white);
+    border-radius: 0.75rem;
+    box-shadow: 0 1rem 3rem rgba($black, 0.2);
+    width: 90%;
+    max-width: 680px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: o_pop_slide_up 0.2s ease;
+}
+
+.o_pop_dialog_header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--bs-border-color, $border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.o_pop_dialog_body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.o_pop_dialog_footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--bs-border-color, $border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+// ── Mobile Floating Action Buttons ──
+.o_pop_mobile_fab {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.o_pop_fab_btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background-color: $o-brand-primary;
+    color: $white;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba($black, 0.25);
+    position: relative;
+    transition: transform 0.15s ease;
+
+    &:active {
+        transform: scale(0.92);
+    }
+}
+
+.o_pop_fab_badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: $danger;
+    color: $white;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0 4px;
+}
+
+.o_pop_mobile_backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1045;
+    background-color: rgba($black, 0.4);
+    animation: o_pop_fade_in 0.2s ease;
+}
+
+// ── Animations ──
+@keyframes o_pop_fade_in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes o_pop_slide_up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RESPONSIVE — Tablet & Mobile  (< 992px / lg breakpoint)
+// ══════════════════════════════════════════════════════════════════════════════
+@media (max-width: 991.98px) {
+    .o_pop_header_controls {
+        order: 10;
+        width: 100%;
+    }
+
+    .o_pop_header_select {
+        max-width: none;
+        flex: 1;
+    }
+
+    .o_pop_sidebar {
+        position: fixed !important;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 1050;
+        width: 280px !important;
+        min-width: 280px !important;
+        border-radius: 0 !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 16px rgba($black, 0.15);
+
+        &.o_pop_sidebar_open {
+            transform: translateX(0);
+        }
+    }
+
+    .o_pop_basket_panel {
+        position: fixed !important;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-height: 75vh;
+        border-radius: 1rem 1rem 0 0 !important;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        box-shadow: 0 -4px 16px rgba($black, 0.15);
+
+        &.o_pop_basket_open {
+            transform: translateY(0);
+        }
+    }
+
+    .o_pop_product_card {
+        width: 11rem;
+        min-height: 9rem;
+    }
+
+    .o_pop_card_img_wrap {
+        height: 56px;
+    }
+
+    .o_pop_body {
+        padding: 0.75rem !important;
+    }
+
+    // Hide history tooltip on tablets (use tap instead)
+    .o_pop_history_tooltip {
+        display: none;
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RESPONSIVE — Phone  (< 576px)
+// ──────────────────────────────────────────────────────────────────────────────
+@media (max-width: 575.98px) {
+    .o_pop_product_card {
+        width: calc(50% - 0.5rem);
+        min-height: 8rem;
+        padding: 0.5rem;
+    }
+
+    .o_pop_card_img_wrap {
+        height: 48px;
+    }
+
+    .o_pop_product_name {
+        font-size: 0.75rem;
+    }
+
+    .o_pop_product_grid {
+        gap: 0.5rem !important;
+        padding: 0.5rem !important;
+    }
+
+    .o_pop_numpad_grid button {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        font-size: 1.1rem !important;
+    }
+}
