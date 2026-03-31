@@ -23,6 +23,11 @@
         <field name="arch" type="xml">
             <list string="POP Orders" create="false" decoration-muted="state == 'cancel'"
                   decoration-success="state == 'confirmed'">
+                                <button name="action_print_receipt_order"
+                                                string="Print Receipt"
+                                                type="object"
+                                                icon="fa-print"
+                                                invisible="not purchase_order_id"/>
                 <field name="name"/>
                 <field name="date_order"/>
                 <field name="partner_id"/>
@@ -72,6 +77,11 @@
                             type="object"
                             class="btn-primary"
                             invisible="not purchase_order_id"/>
+                    <button name="action_print_receipt_order"
+                        string="Print Receipt"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not purchase_order_id"/>
                     <button name="action_cancel"
                             string="Cancel"
                             type="object"

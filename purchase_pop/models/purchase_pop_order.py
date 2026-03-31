@@ -74,6 +74,19 @@ class PurchasePopOrder(models.Model):
             'target': 'current',
         }
 
+    def action_print_receipt_order(self):
+        self.ensure_one()
+        if not self.purchase_order_id:
+            raise UserError(_('This POP order is not linked to a purchase order yet.'))
+        return self._get_receipt_report_action(self.purchase_order_id)
+
+    @api.model
+    def action_print_receipt_order_from_purchase_order(self, purchase_order_id):
+        purchase_order = self.env['purchase.order'].browse(purchase_order_id).exists()
+        if not purchase_order:
+            raise UserError(_('Purchase order not found.'))
+        return self._get_receipt_report_action(purchase_order)
+
     # -------------------------------------------------------------------------
     # RPC methods called from the POP terminal OWL component
     # -------------------------------------------------------------------------
@@ -396,11 +409,30 @@ class PurchasePopOrder(models.Model):
             'purchase_order_id': order.id,
             'purchase_order_name': order.name,
             'purchase_order_state': order.state,
+            'receipt_order_count': len(self._get_receipt_orders(order)),
+            'receipt_order_count': len(self._get_receipt_orders(order)),
         }
 
     # -------------------------------------------------------------------------
     # Helpers
     # -------------------------------------------------------------------------
+
+    @api.model
+    def _get_receipt_orders(self, purchase_order):
+        return purchase_order.picking_ids.filtered(
+            lambda picking: picking.picking_type_code == 'incoming' and picking.state != 'cancel'
+        )
+
+    @api.model
+    def _get_receipt_report_action(self, purchase_order):
+        pickings = self._get_receipt_orders(purchase_order)
+        if not pickings:
+            raise UserError(_('No receipt orders are available for purchase order %s.') % purchase_order.name)
+
+        active_pickings = pickings.filtered(lambda picking: picking.state != 'done')
+        if active_pickings:
+            return self.env.ref('stock.action_report_picking').report_action(active_pickings)
+        return self.env.ref('stock.action_report_delivery').report_action(pickings)
 
     @api.model
     def _get_purchaseable_categories(self):

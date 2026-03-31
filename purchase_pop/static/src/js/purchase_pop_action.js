@@ -518,6 +518,7 @@ class PurchasePopAction extends Component {
                 id: result.purchase_order_id,
                 name: result.purchase_order_name,
                 popId: result.pop_order_id,
+                receiptOrderCount: result.receipt_order_count || 0,
             };
             this.clearBasket();
             const actionText = this.state.selectedOrderId ? "updated" : "confirmed";
@@ -547,6 +548,20 @@ class PurchasePopAction extends Component {
             views: [[false, "form"]],
             target: "current",
         });
+    }
+
+    async printLastReceiptOrder() {
+        if (!this.state.lastConfirmedPO) return;
+        try {
+            const action = await this.orm.call(
+                "purchase.pop.order",
+                "action_print_receipt_order_from_purchase_order",
+                [this.state.lastConfirmedPO.id]
+            );
+            await this.actionService.doAction(action);
+        } catch (e) {
+            this.notification.add(e.message || e.data?.message || "Failed to print receipt order.", { type: "danger" });
+        }
     }
 
     dismissConfirmBanner() {

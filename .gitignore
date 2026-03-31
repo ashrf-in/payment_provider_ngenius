@@ -4,3 +4,6 @@ purchase_pop/static/.DS_Store
 purchase_pop/static/src/.DS_Store
 .DS_Store
 .DS_Store
+purchase_pop.zip
+purchase_pop/models/__pycache__/purchase_pop_order.cpython-312.pyc
+.DS_Store
