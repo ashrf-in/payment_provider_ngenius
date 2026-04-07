@@ -1,0 +1,75 @@
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h1 class="oe_slogan">Vendor Bill AI Parser</h1>
+        <h2 class="oe_slogan text-muted">Fill draft supplier bills from PDFs and images with external AI providers</h2>
+        <p class="oe_mt32">
+            This module adds an AI-assisted vendor bill import workflow for Odoo Accounting.
+            It reads the main attachment on a draft vendor bill, sends the document to the
+            configured external AI provider, and writes back the extracted supplier,
+            reference, dates, totals, taxes, purchase order references, and invoice lines.
+        </p>
+        <p class="oe_mt16">
+            <img src="banner.png" alt="Vendor Bill AI Parser overview" class="img img-fluid oe_picture"/>
+        </p>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="col-12 col-lg-6">
+            <h3>Included Features</h3>
+            <ul>
+                <li>Manual parse action on draft vendor bills with a supported attachment</li>
+                <li>Automatic parsing during vendor bill attachment import flows</li>
+                <li>OpenAI, OpenAI-compatible, and Google Gemini provider support</li>
+                <li>Confidence scoring, warnings, and result traceability on the bill</li>
+                <li>Optional supplier auto-creation and partner bank detection</li>
+                <li>Purchase order reference detection and line/tax matching</li>
+            </ul>
+        </div>
+        <div class="col-12 col-lg-6">
+            <h3>Requirements</h3>
+            <ul>
+                <li>Odoo Accounting with <strong>account_invoice_extract</strong></li>
+                <li>A supported external AI account and API key</li>
+                <li>Administrator approval for external data transfer</li>
+            </ul>
+            <h3 class="mt24">Supported Documents</h3>
+            <ul>
+                <li>PDF vendor bills</li>
+                <li>Image attachments such as PNG, JPG, WEBP, BMP, GIF, and TIFF</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="col-12">
+            <h3>Configuration</h3>
+            <ol>
+                <li>Open Accounting settings and enable <strong>AI Vendor Bill Parser</strong>.</li>
+                <li>Select the provider, model, and API key.</li>
+                <li>Confirm the external data transfer consent checkbox.</li>
+                <li>Choose manual or automatic parsing mode.</li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="col-12">
+            <h3>Data and Privacy</h3>
+            <p>
+                This module sends the vendor bill attachment and the extracted accounting context
+                needed for parsing to the configured external AI provider. Parsing is blocked until
+                an administrator explicitly enables the in-app consent setting.
+            </p>
+            <p>
+                If your company has internal data residency, privacy, or supplier confidentiality
+                requirements, review them before enabling this module in production.
+            </p>
+        </div>
+    </div>
+</section>
