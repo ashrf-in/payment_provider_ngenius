@@ -18,5 +18,5 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='account_vendor_bill_ai.api_key',
         readonly=False,
         groups='base.group_system',
-        help='Shared API key for the selected provider. If empty, standard OpenAI and Google providers fall back to the existing AI module keys when available.',
+        help='API key used by the selected provider for vendor bill parsing.',
     )

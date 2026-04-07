@@ -15,6 +15,35 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    def _register_hook(self):
+        result = super()._register_hook()
+        model_cls = type(self)
+        if getattr(model_cls, '_vendor_bill_ai_runtime_wrapped', False):
+            return result
+
+        original_get_edi_decoder = model_cls._get_edi_decoder
+        original_needs_auto_extract = getattr(model_cls, '_needs_auto_extract', None)
+
+        @api.model
+        def _vendor_bill_ai_runtime_get_edi_decoder(move, file_data, new=False):
+            decoder_info = move._vendor_bill_ai_get_decoder_info(file_data)
+            if decoder_info:
+                return decoder_info
+            return original_get_edi_decoder(move, file_data, new)
+
+        def _vendor_bill_ai_runtime_needs_auto_extract(move, new_document=False):
+            move.ensure_one()
+            if move._vendor_bill_ai_should_disable_auto_extract():
+                return False
+            if original_needs_auto_extract:
+                return original_needs_auto_extract(move, new_document)
+            return False
+
+        model_cls._get_edi_decoder = _vendor_bill_ai_runtime_get_edi_decoder
+        model_cls._needs_auto_extract = _vendor_bill_ai_runtime_needs_auto_extract
+        model_cls._vendor_bill_ai_runtime_wrapped = True
+        return result
+
     vendor_bill_ai_state = fields.Selection(
         [
             ('not_requested', 'Not Requested'),
@@ -513,12 +542,16 @@ class AccountMove(models.Model):
 
     def _needs_auto_extract(self, new_document=False):
         self.ensure_one()
-        if self._vendor_bill_ai_is_auto_enabled():
+        if self._vendor_bill_ai_should_disable_auto_extract():
             return False
         parent = super()
         if hasattr(parent, '_needs_auto_extract'):
             return parent._needs_auto_extract(new_document)
         return False
+
+    def _vendor_bill_ai_should_disable_auto_extract(self):
+        self.ensure_one()
+        return self._vendor_bill_ai_is_auto_enabled()
 
     @api.model
     def _get_import_file_type(self, file_data):
@@ -547,11 +580,14 @@ class AccountMove(models.Model):
         invoice._vendor_bill_ai_process(force=True, replace_lines=True, raise_on_error=False)
         return False
 
-    def _get_edi_decoder(self, file_data, new=False):
+    @api.model
+    def _vendor_bill_ai_get_decoder_info(self, file_data):
         company = self.company_id or self.env.company
+        service = self.env['account.vendor.bill.ai.service']
         if (
             company.vendor_bill_ai_mode == 'auto'
-            and self.env['account.vendor.bill.ai.service'].is_configured(company)
+            and service.has_data_transfer_consent(company)
+            and service.is_configured(company)
             and file_data.get('attachment')
             and file_data.get('import_file_type') in {'pdf', 'jpg', 'png', 'image'}
         ):
@@ -559,4 +595,10 @@ class AccountMove(models.Model):
                 'decoder': self._import_vendor_bill_ai,
                 'priority': 30 if file_data.get('import_file_type') == 'pdf' else 25,
             }
+        return None
+
+    def _get_edi_decoder(self, file_data, new=False):
+        decoder_info = self._vendor_bill_ai_get_decoder_info(file_data)
+        if decoder_info:
+            return decoder_info
         return super()._get_edi_decoder(file_data, new)

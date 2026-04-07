@@ -59,10 +59,6 @@ class AccountVendorBillAIService(models.AbstractModel):
     def _get_api_key(self, company, provider, raise_if_missing=False):
         icp = self.env['ir.config_parameter'].sudo()
         api_key = icp.get_param('account_vendor_bill_ai.api_key')
-        if not api_key and provider == 'openai':
-            api_key = icp.get_param('ai.openai_key')
-        if not api_key and provider == 'google':
-            api_key = icp.get_param('ai.google_key')
         if not api_key and raise_if_missing:
             if provider == 'openai_compatible':
                 raise UserError(_('No API key set for the OpenAI-compatible vendor bill parser.'))

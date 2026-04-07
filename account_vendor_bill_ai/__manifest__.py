@@ -2,7 +2,7 @@
 
 {
     'name': 'Vendor Bill AI Parser',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.1',
     'category': 'Accounting/Accounting',
     'summary': 'Parse vendor bill PDFs and images with external AI providers',
     'description': """
@@ -24,7 +24,7 @@ Important:
 - users must opt in from Accounting settings before parsing is enabled
 - an active external AI account and API key are required
 """,
-    'depends': ['account', 'account_invoice_extract'],
+    'depends': ['account'],
     'external_dependencies': {
         'python': ['requests', 'PyPDF2', 'python-dateutil'],
     },
@@ -35,6 +35,7 @@ Important:
     'images': ['static/description/banner.png'],
     'installable': True,
     'author': 'Ashraf Ali',
+    'maintainer': 'Ashraf Ali',
     'website': 'https://ashrf.in',
     'support': 'contact@ashrf.in',
     'license': 'LGPL-3',

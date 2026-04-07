@@ -28,9 +28,6 @@
                             <label for="vendor_bill_ai_api_key" class="col-lg-4 o_light_label"/>
                             <field name="vendor_bill_ai_api_key" class="col-lg-8" placeholder="API key"/>
                         </div>
-                        <div class="text-muted mt8" groups="base.group_system">
-                            If this key is empty, OpenAI and Google providers reuse the existing AI module keys when available.
-                        </div>
                         <div class="row mt8">
                             <label for="vendor_bill_ai_data_transfer_consent" class="col-lg-4 o_light_label"/>
                             <field name="vendor_bill_ai_data_transfer_consent" class="col-lg-8"/>

@@ -1,7 +1,9 @@
+from io import BytesIO
 from unittest.mock import patch
 
+from PyPDF2 import PdfWriter
+
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.addons.account.tests.test_account_incoming_supplier_invoice import TestAccountInvoiceImportMixin
 from odoo.addons.account_vendor_bill_ai.models.account_move import AccountMove
 from odoo.addons.account_vendor_bill_ai.models.vendor_bill_ai_service import AccountVendorBillAIService
 from odoo.exceptions import UserError
@@ -9,7 +11,7 @@ from odoo.tests import tagged
 
 
 @tagged('post_install', '-at_install')
-class TestVendorBillAI(AccountTestInvoicingCommon, TestAccountInvoiceImportMixin):
+class TestVendorBillAI(AccountTestInvoicingCommon):
 
     @classmethod
     def setUpClass(cls):
@@ -42,6 +44,16 @@ class TestVendorBillAI(AccountTestInvoicingCommon, TestAccountInvoiceImportMixin
             'res_model': res_model or False,
             'res_id': res_id or 0,
         })
+
+    def _get_dummy_pdf_vals(self):
+        writer = PdfWriter()
+        writer.add_blank_page(width=72, height=72)
+        data = BytesIO()
+        writer.write(data)
+        return {
+            'raw': data.getvalue(),
+            'mimetype': 'application/pdf',
+        }
 
     def _sample_payload(self):
         return {
@@ -145,6 +157,23 @@ class TestVendorBillAI(AccountTestInvoicingCommon, TestAccountInvoiceImportMixin
 
         self.assertEqual(move.message_main_attachment_id, attachment)
         self.assertEqual(enqueue_parse.call_args.kwargs['replace_lines'], True)
+
+    def test_register_as_main_attachment_skips_ocr_auto_extract_when_ai_is_enabled(self):
+        move_model_cls = type(self.env['account.move'])
+        if not hasattr(move_model_cls, '_send_batch_for_digitization'):
+            self.skipTest('OCR batch sending is not available in this environment.')
+
+        self.company.vendor_bill_ai_mode = 'auto'
+        move = self.env['account.move'].create({
+            'move_type': 'in_invoice',
+            'journal_id': self.purchase_journal.id,
+        })
+        attachment = self._make_attachment(res_model='account.move', res_id=move.id)
+
+        with patch.object(move_model_cls, '_send_batch_for_digitization', autospec=True) as send_batch:
+            attachment.register_as_main_attachment(force=True)
+
+        self.assertFalse(send_batch.called)
 
     def test_manual_parse_requires_data_transfer_consent(self):
         self.company.vendor_bill_ai_data_transfer_consent = False
