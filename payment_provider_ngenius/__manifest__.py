@@ -5,12 +5,12 @@
     'version': '19.0.1.1.0',
     'category': 'Accounting/Payment Providers',
     'sequence': 350,
-    'summary': "Accept online payments with N-Genius in Odoo.",
+    'summary': "Accept online payments with N-Genius by Network International.",
     'description': """
 N-Genius Payment Provider for Odoo
 ==================================
 
-Accept online payments in Odoo with N-Genius Online.
+Accept online payments in Odoo with N-Genius Online by Network International.
 
 This module adds N-Genius as a payment option in Odoo and gives merchants a
 simple way to offer a secure hosted payment flow to customers.
@@ -21,7 +21,8 @@ Features:
 - Automatic payment status updates in Odoo
 - Full refund support from Odoo
 
-Requires an active N-Genius merchant account and valid credentials.
+Requires an active N-Genius merchant account from Network International and
+valid credentials.
     """,
     'depends': ['payment', 'account_payment'],
     'data': [

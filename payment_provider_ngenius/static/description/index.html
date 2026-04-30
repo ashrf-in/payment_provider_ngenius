@@ -3,221 +3,174 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>N-Genius Payment Provider for Odoo</title>
   </head>
   <body>
-    <!-- Hero Section -->
     <div
-      class="container"
-      style="
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          sans-serif;
-      "
+      class="container py-4"
+      style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2f2f2f;"
     >
-      <div class="text-center py-4">
-        <h2 style="color: #714b67">N-Genius Payment Provider</h2>
-        <p class="lead" style="color: #555">
-          Accept card payments securely with Network International's N-Genius
-          gateway
+      <div class="text-center mb-5">
+        <h1 class="font-weight-bold mb-3" style="color: #714b67;">
+          N-Genius Payment Provider
+        </h1>
+        <p class="lead mb-2">
+          Accept online payments in Odoo with N-Genius Online by Network International.
+        </p>
+        <p class="text-muted mb-0">
+          Connect your Odoo checkout to a secure hosted payment flow and manage payment activity from Odoo.
         </p>
       </div>
 
-      <!-- Features Section -->
-      <div class="row py-3">
-        <div class="col-12">
-          <h4
-            style="
-              color: #714b67;
-              border-bottom: 2px solid #714b67;
-              padding-bottom: 8px;
-            "
-          >
-            ✨ Features
-          </h4>
+      <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+          <div class="p-4 border rounded bg-light h-100">
+            <h3 class="font-weight-bold mb-3" style="color: #714b67;">What This App Does</h3>
+            <p>
+              This module adds N-Genius as a payment option in Odoo, so customers can complete
+              their payment on a secure hosted payment page.
+            </p>
+            <p class="mb-0">
+              It is built for merchants already using Network International and looking for a smooth,
+              connected checkout experience inside Odoo.
+            </p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <img
+            src="checkout_screenshot.png"
+            alt="Odoo checkout with N-Genius by Network International"
+            class="img-fluid rounded border"
+          />
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <div
-            class="p-3"
-            style="
-              background: #f8f9fa;
-              border-radius: 8px;
-              border-left: 4px solid #714b67;
-            "
-          >
-            <strong>💳 Card Payments</strong>
-            <p class="mb-0 text-muted">
-              Accept Visa, Mastercard, and American Express
-            </p>
+      <div class="mb-4">
+        <h3 class="font-weight-bold mb-4 text-center" style="color: #714b67;">Main Benefits</h3>
+        <div class="row">
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="h-100 p-3 border rounded bg-light">
+              <h5 class="font-weight-bold">Secure Checkout</h5>
+              <p class="text-muted mb-0">
+                Customers pay through the hosted N-Genius payment page.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="h-100 p-3 border rounded bg-light">
+              <h5 class="font-weight-bold">Easy Setup</h5>
+              <p class="text-muted mb-0">
+                Configure your N-Genius credentials from the Odoo payment provider screen.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="h-100 p-3 border rounded bg-light">
+              <h5 class="font-weight-bold">Payment Visibility</h5>
+              <p class="text-muted mb-0">
+                Track payment updates directly inside Odoo.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="h-100 p-3 border rounded bg-light">
+              <h5 class="font-weight-bold">Full Refunds</h5>
+              <p class="text-muted mb-0">
+                Refund eligible transactions from Odoo when needed.
+              </p>
+            </div>
           </div>
         </div>
-        <div class="col-md-6 mb-3">
-          <div
-            class="p-3"
-            style="
-              background: #f8f9fa;
-              border-radius: 8px;
-              border-left: 4px solid #28a745;
-            "
-          >
-            <strong>🔒 3D Secure (3DS2)</strong>
-            <p class="mb-0 text-muted">
-              Full EMV 3DS authentication with strict ECI validation
-            </p>
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <div
-            class="p-3"
-            style="
-              background: #f8f9fa;
-              border-radius: 8px;
-              border-left: 4px solid #17a2b8;
-            "
-          >
-            <strong>🌍 Sandbox & Production</strong>
-            <p class="mb-0 text-muted">
-              Easy switching between test and live environments
-            </p>
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <div
-            class="p-3"
-            style="
-              background: #f8f9fa;
-              border-radius: 8px;
-              border-left: 4px solid #ffc107;
-            "
-          >
-            <strong>↩️ Refund Support</strong>
-            <p class="mb-0 text-muted">
-              Process full refunds directly from Odoo
-            </p>
-          </div>
-        </div>
-              <div class="container py-4">
-                <div class="text-center mb-5">
-                  <h1 class="font-weight-bold mb-3" style="color: #714b67;">
-                    N-Genius Payment Provider
-                  </h1>
-                  <p class="lead mb-2">
-                    Accept online payments in Odoo with N-Genius Online.
-                  </p>
-                  <p class="text-muted mb-0">
-                    Give customers a secure checkout experience and manage payment activity from Odoo.
-          <div
-            class="p-3"
-            style="
-                <div class="row align-items-center mb-5">
-                  <div class="col-lg-6 mb-4 mb-lg-0">
-                    <div class="p-4 border rounded bg-light h-100">
-                      <h3 class="font-weight-bold mb-3" style="color: #714b67;">What This App Does</h3>
-                      <p>
-                        This module adds N-Genius as a payment option in Odoo, so customers can complete
-                        their payment on a secure hosted payment page.
-                      </p>
-                      <p class="mb-0">
-                        It is a good fit for businesses that already use N-Genius and want a smooth payment
-                        experience connected to their Odoo website checkout.
-                      </p>
-                    </div>
-      <div class="row py-3 mt-3">
-                  <div class="col-lg-6">
-                    <img
-                      src="checkout_screenshot.png"
-                      alt="N-Genius checkout in Odoo"
-                      class="img-fluid rounded border"
-                    />
-                  </div>
-                </div>
+      </div>
 
-                <div class="mb-4">
-                  <h3 class="font-weight-bold mb-4 text-center" style="color: #714b67;">Main Benefits</h3>
-                  <div class="row">
-                    <div class="col-md-6 col-lg-3 mb-3">
-                      <div class="h-100 p-3 border rounded bg-light">
-                        <h5 class="font-weight-bold">Secure Checkout</h5>
-                        <p class="text-muted mb-0">
-                          Customers pay through the N-Genius hosted payment page.
-                        </p>
-                      </div>
-            <li>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                      <div class="h-100 p-3 border rounded bg-light">
-                        <h5 class="font-weight-bold">Easy Setup</h5>
-                        <p class="text-muted mb-0">
-                          Configure your credentials from the Odoo payment provider screen.
-                        </p>
-                      </div>
-            </li>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                      <div class="h-100 p-3 border rounded bg-light">
-                        <h5 class="font-weight-bold">Payment Visibility</h5>
-                        <p class="text-muted mb-0">
-                          Track payment updates directly inside Odoo.
-                        </p>
-                      </div>
-          >
-                    <div class="col-md-6 col-lg-3 mb-3">
-                      <div class="h-100 p-3 border rounded bg-light">
-                        <h5 class="font-weight-bold">Full Refunds</h5>
-                        <p class="text-muted mb-0">
-                          Refund eligible transactions from Odoo when needed.
-                        </p>
-                      </div>
-        <div class="col-12">
-          <h4
-                </div>
+      <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+          <img
+            src="config_screenshot.png"
+            alt="N-Genius provider configuration in Odoo"
+            class="img-fluid rounded border"
+          />
+        </div>
+        <div class="col-lg-6">
+          <h3 class="font-weight-bold mb-3" style="color: #714b67;">Simple Configuration</h3>
+          <ul class="pl-3 mb-0">
+            <li class="mb-2">Install the module in your Odoo database.</li>
+            <li class="mb-2">Open the N-Genius payment provider settings.</li>
+            <li class="mb-2">Add your API key and outlet reference.</li>
+            <li class="mb-2">Choose test mode or live mode.</li>
+            <li>Publish the provider and start accepting payments.</li>
+          </ul>
+        </div>
+      </div>
 
-                <div class="row align-items-center mb-5">
-                  <div class="col-lg-6 mb-4 mb-lg-0">
-                    <img
-                      src="config_screenshot.png"
-                      alt="N-Genius provider configuration in Odoo"
-                      class="img-fluid rounded border"
-                    />
-                  </div>
-                  <div class="col-lg-6">
-                    <h3 class="font-weight-bold mb-3" style="color: #714b67;">Simple Configuration</h3>
-                    <ul class="pl-3 mb-0">
-                      <li class="mb-2">Install the module in your Odoo database.</li>
-                      <li class="mb-2">Open the N-Genius payment provider settings.</li>
-                      <li class="mb-2">Add your API key and outlet reference.</li>
-                      <li class="mb-2">Choose test mode or live mode.</li>
-                      <li>Publish the provider and start accepting payments.</li>
-                    </ul>
-                  </div>
-                </div>
+      <div class="mb-5">
+        <h3 class="font-weight-bold mb-4 text-center" style="color: #714b67;">Included Features</h3>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="p-3 border rounded bg-light h-100">
+              <h5 class="font-weight-bold">Hosted Payment Flow</h5>
+              <p class="text-muted mb-0">
+                Redirect customers to a secure payment page managed by N-Genius.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="p-3 border rounded bg-light h-100">
+              <h5 class="font-weight-bold">Sandbox and Live Modes</h5>
+              <p class="text-muted mb-0">
+                Test your setup before going live with real transactions.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="p-3 border rounded bg-light h-100">
+              <h5 class="font-weight-bold">Automatic Status Updates</h5>
+              <p class="text-muted mb-0">
+                Keep Odoo payment information up to date after checkout.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="p-3 border rounded bg-light h-100">
+              <h5 class="font-weight-bold">Full Refund Support</h5>
+              <p class="text-muted mb-0">
+                Manage full refunds from Odoo for supported transactions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                <div class="mb-5">
-                  <h3 class="font-weight-bold mb-4 text-center" style="color: #714b67;">Included Features</h3>
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <div class="p-3 border rounded bg-light h-100">
-                        <h5 class="font-weight-bold">Hosted Payment Flow</h5>
-                        <p class="text-muted mb-0">
-                          Redirect customers to a secure payment page managed by N-Genius.
-                        </p>
-                      </div>
-              <tr>
-                    <div class="col-md-6 mb-3">
-                      <div class="p-3 border rounded bg-light h-100">
-                        <h5 class="font-weight-bold">Sandbox and Live Modes</h5>
-                        <p class="text-muted mb-0">
-                          Test your setup before going live with real transactions.
-                        </p>
-                      </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <div class="p-3 border rounded bg-light h-100">
-                        <h5 class="font-weight-bold">Automatic Status Updates</h5>
-                        <p class="text-muted mb-0">
-                          Keep Odoo payment information up to date after checkout.
-                        </p>
-                      </div>
-                    </div>
+      <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+          <div class="p-4 border rounded bg-light h-100">
+            <h3 class="font-weight-bold mb-3" style="color: #714b67;">Important Note</h3>
+            <p class="mb-0">
+              This app requires an active N-Genius merchant account from Network International and
+              valid credentials. It is intended for businesses that want to connect their existing
+              payment service with Odoo.
+            </p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <img
+            src="main_screenshot.png"
+            alt="N-Genius payment provider module in Odoo"
+            class="img-fluid rounded border"
+          />
+        </div>
+      </div>
+
+      <div class="text-center p-4 border rounded bg-light">
+        <h3 class="font-weight-bold mb-3" style="color: #714b67;">Support</h3>
+        <p class="mb-2">Need help with installation or configuration?</p>
+        <p class="mb-0">
+          <a href="mailto:connect@ashrf.in">connect@ashrf.in</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
                     <div class="col-md-6 mb-3">
                       <div class="p-3 border rounded bg-light h-100">
                         <h5 class="font-weight-bold">Full Refund Support</h5>
