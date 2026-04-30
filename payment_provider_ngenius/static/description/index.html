@@ -1,1047 +1,758 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>N-Genius Payment Provider for Odoo</title>
     <style>
-      :root {
-        --bg: #f4fbf7;
-        --bg-soft: #eef7f2;
-        --panel: rgba(255, 255, 255, 0.9);
-        --panel-strong: #ffffff;
-        --ink: #102537;
-        --muted: #547084;
-        --line: #d7e8e0;
-        --brand: #0f9d73;
-        --brand-dark: #0a6d50;
-        --accent: #17354f;
-        --accent-soft: #e4f6ef;
-        --warning: #f6c969;
-        --shadow: 0 26px 70px rgba(13, 40, 56, 0.12);
-      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      * {
-        box-sizing: border-box;
+      :root {
+        --green:        #009B6E;
+        --green-dark:   #007A55;
+        --green-deeper: #00553B;
+        --green-bg:     #EBF9F3;
+        --green-bg2:    #D4F1E5;
+        --navy:         #0D2137;
+        --navy-mid:     #1B3A54;
+        --slate:        #4A6580;
+        --muted:        #7A93A8;
+        --bg:           #F4F8FB;
+        --surface:      #FFFFFF;
+        --border:       #DDE8F0;
+        --radius-sm:    10px;
+        --radius-md:    16px;
+        --radius-lg:    24px;
+        --radius-xl:    32px;
+        --shadow-sm:    0 1px 3px rgba(13,33,55,.08), 0 1px 2px rgba(13,33,55,.06);
+        --shadow-md:    0 4px 16px rgba(13,33,55,.10), 0 2px 6px rgba(13,33,55,.06);
+        --shadow-lg:    0 12px 40px rgba(13,33,55,.12), 0 4px 12px rgba(13,33,55,.08);
       }
 
       body {
-        margin: 0;
-        font-family: "Avenir Next", "Segoe UI Variable", "Helvetica Neue", sans-serif;
-        color: var(--ink);
-        background:
-          radial-gradient(circle at top left, rgba(15, 157, 115, 0.18), transparent 28%),
-          radial-gradient(circle at 92% 10%, rgba(23, 53, 79, 0.12), transparent 20%),
-          linear-gradient(180deg, #f7fcf9 0%, #f4fbf7 42%, #edf5f1 100%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                     "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--navy);
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
       }
 
-      img {
-        display: block;
-        max-width: 100%;
-      }
+      img { display: block; max-width: 100%; height: auto; }
+      a   { color: var(--green-dark); }
 
-      a {
-        color: inherit;
-      }
+      /* ── Layout ── */
+      .page    { max-width: 1160px; margin: 0 auto; padding: 32px 24px 80px; }
+      .section { margin-top: 28px; }
 
-      code {
-        padding: 3px 7px;
-        border-radius: 999px;
-        background: rgba(23, 53, 79, 0.08);
-        color: var(--accent);
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-        font-size: 13px;
-      }
+      /* ── Surface card ── */
+      .card      { background: var(--surface); border: 1px solid var(--border);
+                   border-radius: var(--radius-xl); box-shadow: var(--shadow-md); overflow: hidden; }
+      .card-body { padding: 36px; }
 
-      .page {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 30px 20px 72px;
-      }
+      /* ── Typography ── */
+      h1 { font-size: 44px; line-height: 1.08; letter-spacing: -.03em; color: var(--navy);
+            margin-bottom: 18px; }
+      h2 { font-size: 27px; line-height: 1.18; letter-spacing: -.02em;
+            color: var(--navy); margin-bottom: 14px; }
+      h3 { font-size: 15px; font-weight: 700; color: var(--navy-mid); margin-bottom: 8px; }
+      h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+      p  { color: var(--slate); line-height: 1.75; }
 
-      .hero,
-      .panel,
-      .support {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 30px;
-        background: var(--panel);
-        box-shadow: var(--shadow);
-      }
+      .lead { font-size: 17px; color: var(--slate); line-height: 1.72; max-width: 640px; }
 
-      .hero,
-      .section {
-        animation: rise 0.8s ease both;
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
-        gap: 30px;
-        padding: 34px;
-        background:
-          linear-gradient(135deg, rgba(15, 157, 115, 0.12), rgba(255, 255, 255, 0.94) 50%),
-          linear-gradient(180deg, rgba(23, 53, 79, 0.06), rgba(255, 255, 255, 0));
-      }
-
-      .hero::before {
-        content: "";
-        position: absolute;
-        top: -120px;
-        right: -120px;
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(15, 157, 115, 0.18), transparent 70%);
-      }
-
+      /* ── Labels ── */
       .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 16px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(15, 157, 115, 0.18);
-        color: var(--accent);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 14px; border-radius: 999px;
+        background: var(--green-bg); border: 1px solid rgba(0,155,110,.22);
+        font-size: 11px; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--green-dark); margin-bottom: 18px;
+      }
+      .eyebrow img { width: 18px; height: 18px; border-radius: 5px; }
+
+      .tag {
+        display: inline-block; padding: 5px 12px; border-radius: 999px;
+        background: var(--green-bg);
+        font-size: 11px; font-weight: 700; letter-spacing: .09em;
+        text-transform: uppercase; color: var(--green-dark); margin-bottom: 14px;
+      }
+      .tag-inv {
+        background: rgba(255,255,255,.16); color: rgba(255,255,255,.88);
+        border: 1px solid rgba(255,255,255,.22);
       }
 
-      .eyebrow img {
-        width: 22px;
-        height: 22px;
-        border-radius: 7px;
+      /* ── Hero ── */
+      .hero {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start;
+        padding: 42px 42px 34px;
+        background: linear-gradient(135deg, #FAFFFE 0%, #EDF8F4 45%, #E4F4EE 100%);
+        border: 1px solid var(--border); border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
       }
 
-      .hero h1 {
-        margin: 18px 0 14px;
-        font-size: 52px;
-        line-height: 0.98;
-        letter-spacing: -0.04em;
-        color: var(--ink);
+      .hero-chips {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 26px;
       }
-
-      .hero p {
-        margin: 0;
-        max-width: 640px;
-        font-size: 18px;
-        line-height: 1.72;
-        color: var(--muted);
-      }
-
-      .hero-points,
-      .mini-grid,
-      .feature-grid,
-      .gallery,
-      .notes,
-      .compare-grid,
-      .requirements,
-      .faq-grid,
-      .history-grid {
-        display: grid;
-        gap: 18px;
-      }
-
-      .hero-points {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin-top: 24px;
-      }
-
-      .chip,
-      .mini-card,
-      .card,
-      .note-card,
-      .compare-card,
-      .req-card {
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.92);
-      }
-
       .chip {
-        padding: 16px 18px;
-        background: rgba(255, 255, 255, 0.78);
+        padding: 14px 16px; border: 1px solid var(--border);
+        border-radius: var(--radius-md); background: rgba(255,255,255,.85);
+      }
+      .chip strong { display: block; font-size: 13px; color: var(--navy); margin-bottom: 4px; }
+      .chip span   { font-size: 13px; color: var(--slate); line-height: 1.5; }
+
+      .screen-frame {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); padding: 14px;
+        box-shadow: var(--shadow-md); margin-bottom: 12px;
+      }
+      .screen-frame img { border-radius: var(--radius-sm); width: 100%; }
+
+      .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+      .stat { padding: 12px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+               background: var(--surface); text-align: center; }
+      .stat strong { display: block; font-size: 12px; font-weight: 700;
+                     color: var(--green-dark); margin-bottom: 3px; }
+      .stat span   { font-size: 11px; color: var(--muted); }
+
+      /* ── Section header row ── */
+      .hrow { display: flex; justify-content: space-between; align-items: flex-start;
+               gap: 24px; margin-bottom: 24px; }
+      .hrow .lead { font-size: 15px; max-width: 400px; flex-shrink: 0; }
+
+      /* ── Feature grid ── */
+      .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+      .feature-card {
+        padding: 24px; border: 1px solid var(--border);
+        border-radius: var(--radius-md); background: var(--surface);
+        box-shadow: var(--shadow-sm);
+      }
+      .fi {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: var(--green-bg); display: flex; align-items: center;
+        justify-content: center; font-size: 19px; margin-bottom: 14px;
+      }
+      .ftag { font-size: 11px; font-weight: 700; letter-spacing: .08em;
+               text-transform: uppercase; color: var(--green-dark); margin-bottom: 6px; }
+
+      /* ── Split layout ── */
+      .split     { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+      .split-rev { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+
+      /* ── Steps timeline ── */
+      .steps { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+      .step  {
+        display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start;
+        padding: 16px; border-radius: var(--radius-md);
+        border: 1px solid var(--border); background: var(--surface);
+      }
+      .step-num {
+        width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(160deg, var(--green), var(--green-dark));
+        color: #fff; font-size: 13px; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .step strong { display: block; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
+      .step p      { font-size: 13px; color: var(--slate); margin: 0; }
+
+      /* ── Gallery ── */
+      .gallery { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+      .g-item  {
+        border-radius: var(--radius-md); border: 1px solid var(--border);
+        overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm);
+      }
+      .g-item img    { width: 100%; }
+      .g-caption     { padding: 11px 14px; font-size: 12px; color: var(--muted);
+                        border-top: 1px solid var(--border); }
+
+      /* ── Config screenshot ── */
+      .config-shot { border-radius: var(--radius-lg); overflow: hidden;
+                     border: 1px solid var(--border); box-shadow: var(--shadow-md); }
+      .config-shot img { width: 100%; }
+
+      /* ── History ── */
+      .history-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+      .h-card { padding: 22px; border-radius: var(--radius-md);
+                border: 1px solid var(--border); background: var(--surface); }
+      .h-card h3 { font-size: 15px; margin-bottom: 9px; }
+      .h-card p  { font-size: 14px; margin: 0; }
+
+      /* ── Scope ── */
+      .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .scope {
+        padding: 26px; border-radius: var(--radius-md); border: 1px solid var(--border);
+      }
+      .scope.incl { background: linear-gradient(160deg,#EBF9F3,#F4FDF9);
+                    border-color: rgba(0,155,110,.25); }
+      .scope.excl { background: linear-gradient(160deg,#F4F8FB,#FAFCFD); }
+      .scope h3   { font-size: 15px; margin-bottom: 16px; }
+      .scope ul   { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+      .scope li   { display: flex; align-items: flex-start; gap: 9px;
+                    font-size: 14px; color: var(--slate); line-height: 1.55; }
+      .scope.incl li::before { content: '✓'; color: var(--green); font-weight: 700;
+                                flex-shrink: 0; line-height: 1.4; }
+      .scope.excl li::before { content: '—'; color: var(--muted);
+                                flex-shrink: 0; line-height: 1.4; }
+
+      /* ── Notes ── */
+      .notes-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+      .n-card { padding: 20px; border-radius: var(--radius-md);
+                border: 1px solid var(--border); background: var(--surface); }
+      .n-card h4 { margin-bottom: 8px; }
+      .n-card p  { font-size: 13px; margin: 0; line-height: 1.65; }
+
+      /* ── Requirements ── */
+      .req-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+      .r-card { padding: 22px; border-radius: var(--radius-md);
+                border: 1px solid var(--border); background: var(--surface); }
+      .r-card h3 { margin-bottom: 14px; }
+      .r-card ul { list-style: none; padding: 0;
+                   display: flex; flex-direction: column; gap: 9px; }
+      .r-card li { display: flex; align-items: flex-start; gap: 8px;
+                   font-size: 14px; color: var(--slate); line-height: 1.5; }
+      .r-card li::before { content: '·'; color: var(--green); font-size: 20px;
+                           line-height: 1.1; flex-shrink: 0; }
+
+      /* ── FAQ ── */
+      .faq-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+      .f-card { padding: 22px; border-radius: var(--radius-md);
+                border: 1px solid var(--border); background: var(--surface); }
+      .f-card h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+      .f-card p  { font-size: 14px; margin: 0; line-height: 1.7; }
+
+      /* ── Code ── */
+      code {
+        font-family: "SF Mono","Fira Code",Consolas,monospace;
+        font-size: 12px; padding: 2px 7px; border-radius: 6px;
+        background: rgba(13,33,55,.07); color: var(--navy-mid);
       }
 
-      .chip strong {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 15px;
-        color: var(--accent);
-      }
-
-      .chip span {
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.6;
-      }
-
-      .hero-visual {
-        position: relative;
-        z-index: 1;
-      }
-
-      .visual-frame {
-        padding: 16px;
-        border-radius: 28px;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(228, 246, 239, 0.92));
-        border: 1px solid rgba(15, 157, 115, 0.18);
-      }
-
-      .visual-frame img,
-      .media img {
-        width: 100%;
-        height: auto;
-        border-radius: 20px;
-        border: 1px solid rgba(16, 37, 55, 0.08);
-      }
-
-      .mini-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        margin-top: 16px;
-      }
-
-      .mini-card {
-        padding: 16px;
-      }
-
-      .mini-card strong {
-        display: block;
-        margin-bottom: 6px;
-        color: var(--brand-dark);
-        font-size: 15px;
-      }
-
-      .mini-card span {
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.6;
-      }
-
-      .section {
-        margin-top: 28px;
-      }
-
-      .panel {
-        padding: 28px;
-      }
-
-      .heading-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 16px;
-        margin-bottom: 22px;
-      }
-
-      .kicker {
-        display: inline-block;
-        margin-bottom: 10px;
-        color: var(--brand-dark);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      h2,
-      h3,
-      h4 {
-        margin: 0;
-      }
-
-      h2 {
-        font-size: 31px;
-        line-height: 1.08;
-        letter-spacing: -0.03em;
-      }
-
-      .intro {
-        margin: 10px 0 0;
-        max-width: 720px;
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.72;
-      }
-
-      .feature-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .card {
-        padding: 22px;
-        box-shadow: 0 14px 34px rgba(16, 37, 55, 0.05);
-      }
-
-      .card h3,
-      .card h4 {
-        margin-bottom: 10px;
-        color: var(--accent);
-        font-size: 21px;
-      }
-
-      .card p,
-      .card li,
-      .compare-card li,
-      .req-card li,
-      .note-card p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 15px;
-        line-height: 1.7;
-      }
-
-      .split {
-        display: grid;
-        grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
-        gap: 22px;
-        align-items: center;
-      }
-
-      .timeline {
-        display: grid;
-        gap: 14px;
-        margin-top: 22px;
-      }
-
-      .step {
-        display: grid;
-        grid-template-columns: 44px minmax(0, 1fr);
-        gap: 14px;
-        align-items: start;
-        padding: 16px;
-        border-radius: 20px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .step-number {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
-        color: #ffffff;
-        font-weight: 800;
-        font-size: 15px;
-      }
-
-      .step strong,
-      .compare-card h3,
-      .req-card h3,
-      .note-card h4 {
-        display: block;
-        margin-bottom: 8px;
-        color: var(--accent);
-      }
-
-      .gallery {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .media {
-        padding: 16px;
-        border-radius: 24px;
-        border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(236, 247, 242, 0.96));
-      }
-
-      .compare-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .compare-card,
-      .req-card,
-      .faq-card,
-      .history-card {
-        padding: 24px;
-      }
-
-      .compare-card ul,
-      .req-card ul {
-        margin: 16px 0 0;
-        padding-left: 18px;
-      }
-
-      .compare-card li + li,
-      .req-card li + li {
-        margin-top: 10px;
-      }
-
-      .compare-card.supported {
-        background: linear-gradient(180deg, rgba(15, 157, 115, 0.1), rgba(255, 255, 255, 0.95));
-      }
-
-      .compare-card.boundary {
-        background: linear-gradient(180deg, rgba(23, 53, 79, 0.08), rgba(255, 255, 255, 0.95));
-      }
-
-      .notes {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .note-card {
-        padding: 22px;
-        background: rgba(255, 255, 255, 0.93);
-      }
-
-      .note-card p strong {
-        color: var(--accent);
-      }
-
-      .requirements {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .req-card {
-        background: rgba(255, 255, 255, 0.94);
-      }
-
-      .history-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .history-card {
-        background: rgba(255, 255, 255, 0.94);
-      }
-
-      .history-card h3,
-      .faq-card h3 {
-        margin-bottom: 10px;
-        color: var(--accent);
-        font-size: 21px;
-      }
-
-      .history-card p,
-      .faq-card p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 15px;
-        line-height: 1.7;
-      }
-
-      .faq-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .faq-card {
-        background: linear-gradient(180deg, rgba(23, 53, 79, 0.05), rgba(255, 255, 255, 0.96));
-      }
-
+      /* ── Support banner ── */
       .support {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 18px;
-        padding: 28px;
-        background:
-          linear-gradient(135deg, rgba(15, 157, 115, 0.12), rgba(255, 255, 255, 0.96)),
-          rgba(255, 255, 255, 0.92);
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 28px; padding: 38px 44px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, #003D2E 0%, #006B4A 60%, #007A55 100%);
       }
+      .s-copy h2 { color: #fff; margin-bottom: 10px; }
+      .s-copy p  { color: rgba(255,255,255,.72); margin: 0; font-size: 15px; }
+      .s-note    { margin-top: 14px; font-size: 13px; color: rgba(255,255,255,.48); }
+      .s-actions { display: flex; gap: 12px; flex-shrink: 0; }
 
-      .support-copy h2 {
-        margin-bottom: 10px;
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 13px 24px; border-radius: var(--radius-md);
+        font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap;
       }
+      .btn-white   { background: #fff; color: var(--green-deeper); }
+      .btn-outline  { background: rgba(255,255,255,.14); color: #fff;
+                      border: 1px solid rgba(255,255,255,.3); }
 
-      .support-copy p {
-        margin: 0;
-        max-width: 700px;
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.7;
+      /* ── Responsive ── */
+      @media (max-width: 1040px) {
+        h1 { font-size: 34px; }
+        .hero, .split, .split-rev { grid-template-columns: 1fr; }
+        .feature-grid, .history-grid, .notes-grid, .req-grid { grid-template-columns: repeat(2,1fr); }
+        .hrow { flex-direction: column; }
+        .hrow .lead { max-width: 100%; }
       }
-
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-
-      .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 168px;
-        padding: 13px 18px;
-        border-radius: 16px;
-        text-decoration: none;
-        font-weight: 800;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
-      }
-
-      .button.primary {
-        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
-        color: #ffffff;
-        box-shadow: 0 14px 34px rgba(15, 157, 115, 0.24);
-      }
-
-      .button.secondary {
-        border: 1px solid rgba(23, 53, 79, 0.14);
-        background: rgba(255, 255, 255, 0.86);
-        color: var(--accent);
-      }
-
-      .button:hover {
-        transform: translateY(-1px);
-      }
-
-      .fine-print {
-        margin-top: 16px;
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.7;
-      }
-
-      @keyframes rise {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (max-width: 1024px) {
-        .hero,
-        .split,
-        .feature-grid,
-        .notes,
-        .requirements,
-        .compare-grid,
-        .faq-grid,
-        .history-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .gallery,
-        .hero-points,
-        .mini-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .support {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-      }
-
       @media (max-width: 720px) {
-        .page {
-          padding: 20px 14px 54px;
-        }
-
-        .hero,
-        .panel,
-        .support {
-          border-radius: 24px;
-        }
-
-        .hero,
-        .panel,
-        .support {
-          padding: 22px;
-        }
-
-        .hero h1 {
-          font-size: 38px;
-        }
-
-        h2 {
-          font-size: 26px;
-        }
-
-        .heading-row {
-          display: block;
-        }
-
-        .hero-points,
-        .mini-grid,
-        .gallery {
-          grid-template-columns: 1fr;
-        }
-
-        .button {
-          width: 100%;
-        }
+        .page { padding: 18px 14px 56px; }
+        h1 { font-size: 26px; }
+        h2 { font-size: 21px; }
+        .hero { padding: 26px; }
+        .card-body { padding: 24px; }
+        .hero-chips, .gallery, .scope-grid, .faq-grid { grid-template-columns: 1fr; }
+        .stat-row { grid-template-columns: 1fr 1fr; }
+        .feature-grid, .history-grid, .notes-grid, .req-grid { grid-template-columns: 1fr; }
+        .support { flex-direction: column; align-items: flex-start; padding: 28px; }
+        .s-actions { flex-direction: column; width: 100%; }
+        .btn { text-align: center; }
       }
     </style>
   </head>
   <body>
     <div class="page">
+
+      <!-- ═══════════ HERO ═══════════ -->
       <section class="hero">
         <div>
           <div class="eyebrow">
-            <img src="icon.png" alt="N-Genius icon" />
-            Odoo 19.0 Hosted Payment Provider
+            <img src="icon.png" alt="N-Genius" />
+            Odoo 19.0 · Payment Provider
           </div>
-          <h1>N-Genius payments in Odoo, without handling card data yourself.</h1>
-          <p>
-            This module connects Odoo checkout to N-Genius Online by Network International
-            through a hosted payment flow. Customers pay on N-Genius, Odoo verifies the final
-            result from the provider, and your team keeps payment and refund activity visible in
-            the back office.
+          <h1>N-Genius Online — Hosted card payments for Odoo</h1>
+          <p class="lead">
+            Accept card payments in Odoo through N-Genius Online by Network International.
+            Customers complete payment on the N-Genius hosted page; Odoo verifies the result
+            from the provider API and keeps the full transaction lifecycle visible in your back office.
           </p>
-          <div class="hero-points">
+          <div class="hero-chips">
             <div class="chip">
-              <strong>Hosted checkout</strong>
-              <span>Redirect shoppers to the N-Genius payment page for card collection.</span>
+              <strong>Hosted Redirect</strong>
+              <span>Card data entered on N-Genius — never on your Odoo site</span>
             </div>
             <div class="chip">
-              <strong>Production-ready sync</strong>
-              <span>Return handling and webhook updates both refresh the authoritative order.</span>
+              <strong>Authoritative Sync</strong>
+              <span>Return and webhook both re-fetch from the N-Genius API</span>
             </div>
             <div class="chip">
-              <strong>Operational control</strong>
-              <span>Use test or live credentials and manage supported full refunds in Odoo.</span>
+              <strong>Full Refunds</strong>
+              <span>Trigger refunds or automatic reversals directly from Odoo</span>
             </div>
             <div class="chip">
-              <strong>Safer boundary</strong>
-              <span>Card details stay on N-Genius rather than on your Odoo storefront.</span>
-            </div>
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="visual-frame">
-            <img
-              src="checkout_screenshot.png"
-              alt="Odoo checkout screen with N-Genius selected as the payment method"
-            />
-          </div>
-          <div class="mini-grid">
-            <div class="mini-card">
               <strong>Sandbox + Live</strong>
-              <span>One provider screen for test mode and production rollout.</span>
+              <span>Test-mode and production on a single provider screen</span>
             </div>
-            <div class="mini-card">
-              <strong>Full refunds</strong>
-              <span>Refunds or reversals are requested from Odoo when the action is exposed.</span>
+          </div>
+        </div>
+        <div>
+          <div class="screen-frame">
+            <img src="checkout_screenshot.png"
+                 alt="Odoo checkout with N-Genius payment method selected" />
+          </div>
+          <div class="stat-row">
+            <div class="stat">
+              <strong>Zero card data</strong>
+              <span>stored on Odoo</span>
             </div>
-            <div class="mini-card">
-              <strong>Webhook aware</strong>
-              <span>Supports event-driven status refresh with optional custom header validation.</span>
+            <div class="stat">
+              <strong>Webhook-driven</strong>
+              <span>status updates</span>
+            </div>
+            <div class="stat">
+              <strong>Strict 3DS</strong>
+              <span>ECI enforcement</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">Core Value</span>
-            <h2>Built for merchants who already use N-Genius and want a clean Odoo checkout link.</h2>
+      <!-- ═══════════ FEATURES ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <div class="hrow">
+            <div>
+              <span class="tag">Core Features</span>
+              <h2>Everything you need to run N-Genius in production</h2>
+            </div>
+            <p class="lead">
+              The integration focuses on the real production flow: create a hosted purchase,
+              redirect the customer, verify the result from the source of truth, and keep
+              Odoo in sync at every step.
+            </p>
           </div>
-          <p class="intro">
-            The integration focuses on the real production flow merchants care about: create a
-            hosted purchase, redirect the customer, verify the result from N-Genius, and keep the
-            transaction lifecycle visible in Odoo.
-          </p>
-        </div>
-        <div class="feature-grid">
-          <article class="card">
-            <span class="kicker">Checkout</span>
-            <h3>Hosted payment page</h3>
-            <p>
-              Customers are redirected to N-Genius to complete payment, keeping card entry outside
-              your Odoo website.
-            </p>
-          </article>
-          <article class="card">
-            <span class="kicker">Configuration</span>
-            <h3>Simple provider setup</h3>
-            <p>
-              Configure the API key, outlet reference, environment, and optional webhook header
-              directly from the Odoo payment provider form.
-            </p>
-          </article>
-          <article class="card">
-            <span class="kicker">Verification</span>
-            <h3>Authoritative status refresh</h3>
-            <p>
-              The module re-fetches order details from N-Genius on customer return and on webhook
-              events instead of trusting raw redirect parameters.
-            </p>
-          </article>
-          <article class="card">
-            <span class="kicker">Refunds</span>
-            <h3>Full refunds only</h3>
-            <p>
-              Odoo can request supported full refunds, and the integration can fall back to a
-              reversal or void action when that is the operation exposed by N-Genius.
-            </p>
-          </article>
-          <article class="card">
-            <span class="kicker">Security</span>
-            <h3>Optional webhook secret header</h3>
-            <p>
-              If you secure the webhook with a custom header in N-Genius, the same header name and
-              value can be enforced in Odoo.
-            </p>
-          </article>
-          <article class="card">
-            <span class="kicker">3-D Secure</span>
-            <h3>Strict authentication handling</h3>
-            <p>
-              The module only accepts fully authenticated 3DS ECI outcomes and marks incomplete or
-              failed authentication results as errors.
-            </p>
-          </article>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="fi">💳</div>
+              <div class="ftag">Checkout</div>
+              <h3>Hosted payment page</h3>
+              <p>Customers are redirected to the N-Genius hosted page for card entry.
+                 Card data never passes through Odoo, keeping your storefront outside
+                 PCI scope for that step.</p>
+            </div>
+            <div class="feature-card">
+              <div class="fi">🔐</div>
+              <div class="ftag">Verification</div>
+              <h3>Authoritative status sync</h3>
+              <p>On customer return and on every webhook event, Odoo re-fetches the order
+                 from the N-Genius API. Redirect parameters alone are never trusted to
+                 change a transaction state.</p>
+            </div>
+            <div class="feature-card">
+              <div class="fi">🔁</div>
+              <div class="ftag">Webhooks</div>
+              <h3>Event-driven updates</h3>
+              <p>PURCHASED, CAPTURED, REFUNDED, CANCELLED, and FAILED webhook events are
+                 all handled. Each triggers an authoritative order lookup before the Odoo
+                 transaction is updated.</p>
+            </div>
+            <div class="feature-card">
+              <div class="fi">↩️</div>
+              <div class="ftag">Refunds</div>
+              <h3>Full refund + reversal fallback</h3>
+              <p>Full refunds are submitted from Odoo. When N-Genius exposes a void
+                 or reversal action instead of a standard refund endpoint, the integration
+                 falls back to that action automatically.</p>
+            </div>
+            <div class="feature-card">
+              <div class="fi">🛡️</div>
+              <div class="ftag">3-D Secure</div>
+              <h3>Strict ECI enforcement</h3>
+              <p>Only ECI 05 (Visa) and ECI 02 (Mastercard) — fully authenticated —
+                 are accepted. Attempted or incomplete 3DS outcomes are rejected and
+                 marked as failed payments.</p>
+            </div>
+            <div class="feature-card">
+              <div class="fi">🔑</div>
+              <div class="ftag">Webhook security</div>
+              <h3>Optional header validation</h3>
+              <p>Configure a custom webhook header name and value in N-Genius. The module
+                 validates that exact header on every inbound webhook request as an
+                 additional security layer.</p>
+            </div>
+          </div>
         </div>
       </section>
 
+      <!-- ═══════════ PAYMENT FLOW + GALLERY ═══════════ -->
       <section class="section split">
-        <div class="panel">
-          <span class="kicker">Payment Flow</span>
-          <h2>What happens from checkout to confirmation.</h2>
-          <p class="intro">
-            The integration stays close to the provider's hosted purchase flow and performs status
-            verification on the way back into Odoo.
-          </p>
-          <div class="timeline">
-            <div class="step">
-              <div class="step-number">01</div>
-              <div>
-                <strong>The customer selects N-Genius.</strong>
-                <span>The provider appears as an Odoo payment option for card payments.</span>
+        <div class="card">
+          <div class="card-body">
+            <span class="tag">Payment Flow</span>
+            <h2>From checkout selection to confirmed payment</h2>
+            <p style="font-size:15px; color:var(--slate); margin-bottom:0;">
+              The integration stays close to the N-Genius hosted purchase flow and
+              verifies the authoritative state from the provider API before updating Odoo.
+            </p>
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">01</div>
+                <div>
+                  <strong>Customer selects N-Genius</strong>
+                  <p>N-Genius appears as a card payment option in the Odoo checkout flow.</p>
+                </div>
               </div>
-            </div>
-            <div class="step">
-              <div class="step-number">02</div>
-              <div>
-                <strong>Odoo creates a PURCHASE order.</strong>
-                <span>The request is sent to N-Genius with amount, currency, redirect URL, and available billing details.</span>
+              <div class="step">
+                <div class="step-num">02</div>
+                <div>
+                  <strong>Odoo creates a PURCHASE order</strong>
+                  <p>Amount, currency, redirect URL, sanitized merchant reference, and
+                     any available billing address are sent to the N-Genius API.</p>
+                </div>
               </div>
-            </div>
-            <div class="step">
-              <div class="step-number">03</div>
-              <div>
-                <strong>The shopper pays on N-Genius.</strong>
-                <span>The hosted page handles the checkout experience outside the Odoo storefront.</span>
+              <div class="step">
+                <div class="step-num">03</div>
+                <div>
+                  <strong>Customer pays on N-Genius</strong>
+                  <p>The hosted page handles 3DS, card entry, and authentication
+                     entirely outside the Odoo storefront.</p>
+                </div>
               </div>
-            </div>
-            <div class="step">
-              <div class="step-number">04</div>
-              <div>
-                <strong>Odoo verifies the order on return.</strong>
-                <span>When the customer comes back, Odoo fetches the latest order state from N-Genius before updating the transaction.</span>
+              <div class="step">
+                <div class="step-num">04</div>
+                <div>
+                  <strong>Return verification</strong>
+                  <p>On return to Odoo, the module re-fetches the order from the N-Genius
+                     API and updates the transaction based on the authoritative response.</p>
+                </div>
               </div>
-            </div>
-            <div class="step">
-              <div class="step-number">05</div>
-              <div>
-                <strong>Webhooks confirm backend status.</strong>
-                <span>Purchase, capture, failure, cancellation, and refund notifications trigger another authoritative refresh.</span>
+              <div class="step">
+                <div class="step-num">05</div>
+                <div>
+                  <strong>Webhook confirmation</strong>
+                  <p>Backend events (PURCHASED, CAPTURED, REFUNDED, CANCELLED, FAILED)
+                     trigger a second authoritative order lookup and a final status sync.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="gallery">
-          <div class="media">
-            <img src="main_screenshot.png" alt="N-Genius payment provider overview inside Odoo" />
+        <div class="gallery" style="align-self: start;">
+          <div class="g-item">
+            <img src="main_screenshot.png"
+                 alt="N-Genius payment provider in the Odoo backend" />
+            <div class="g-caption">Provider overview in the Odoo back office</div>
           </div>
-          <div class="media">
-            <img src="checkout_screenshot.png" alt="Checkout page showing N-Genius as the selected payment method" />
-          </div>
-        </div>
-      </section>
-
-      <section class="section split">
-        <div class="media">
-          <img src="config_screenshot.png" alt="N-Genius provider configuration form in Odoo" />
-        </div>
-        <div class="panel">
-          <span class="kicker">Configuration</span>
-          <h2>What you configure in Odoo.</h2>
-          <p class="intro">
-            The provider screen stays compact and focuses on the values you need to go live.
-          </p>
-          <div class="timeline">
-            <div class="step">
-              <div class="step-number">A</div>
-              <div>
-                <strong>API Key</strong>
-                <span>Use the service account key provided by N-Genius.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-number">B</div>
-              <div>
-                <strong>Outlet Reference</strong>
-                <span>Use the outlet identifier from your N-Genius organizational hierarchy.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-number">C</div>
-              <div>
-                <strong>Environment</strong>
-                <span>Use Test for sandbox and Enabled for production.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-number">D</div>
-              <div>
-                <strong>Optional webhook header</strong>
-                <span>Match the same header name and value configured on the N-Genius webhook for an extra validation layer.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-number">E</div>
-              <div>
-                <strong>Webhook and public URL</strong>
-                <span>Set <code>/payment/ngenius/webhook</code> in N-Genius and keep Odoo on a public non-local domain for return handling.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-number">F</div>
-              <div>
-                <strong>Publish and test</strong>
-                <span>Run a sandbox payment end to end before switching the provider to production.</span>
-              </div>
-            </div>
+          <div class="g-item">
+            <img src="checkout_screenshot.png"
+                 alt="N-Genius selected at Odoo checkout" />
+            <div class="g-caption">N-Genius as a checkout payment option</div>
           </div>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">Transaction History</span>
-            <h2>Clear transaction visibility inside Odoo.</h2>
-          </div>
-          <p class="intro">
-            The integration does not stop at redirecting the customer. It also keeps the payment
-            trail understandable for finance, support, and operations teams working inside Odoo.
-          </p>
+      <!-- ═══════════ CONFIGURATION ═══════════ -->
+      <section class="section split-rev">
+        <div class="config-shot">
+          <img src="config_screenshot.png"
+               alt="N-Genius provider configuration form in Odoo" />
         </div>
-        <div class="history-grid">
-          <article class="history-card">
-            <h3>Provider reference tracking</h3>
-            <p>
-              The N-Genius order reference is stored on the Odoo transaction so your team can tie
-              checkout activity back to the provider-side order.
+        <div class="card">
+          <div class="card-body">
+            <span class="tag">Configuration</span>
+            <h2>What you configure in Odoo</h2>
+            <p style="font-size:15px; color:var(--slate); margin-bottom:0;">
+              The provider form is concise. You need your N-Genius service account
+              credentials and a public domain to accept payments.
             </p>
-          </article>
-          <article class="history-card">
-            <h3>Return and webhook refresh</h3>
-            <p>
-              Customer return and webhook events both trigger a fresh order lookup, reducing the
-              risk of stale or incomplete redirect data.
-            </p>
-          </article>
-          <article class="history-card">
-            <h3>Refund audit trail</h3>
-            <p>
-              Supported refunds remain visible in Odoo's transaction flow, helping with follow-up,
-              reconciliation, and support cases.
-            </p>
-          </article>
+            <div class="steps">
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">A</div>
+                <div>
+                  <strong>API Key</strong>
+                  <p>Enter the service account API key from N-Genius. Stored at
+                     system-admin level, not visible to regular users.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">B</div>
+                <div>
+                  <strong>Outlet Reference</strong>
+                  <p>The outlet identifier from your N-Genius organizational hierarchy.
+                     Determines which outlet processes the transaction.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">C</div>
+                <div>
+                  <strong>Environment</strong>
+                  <p>Set <em>Test</em> for sandbox or <em>Enabled</em> for production.
+                     Switching environment switches the N-Genius API endpoint automatically.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">D</div>
+                <div>
+                  <strong>Webhook header (optional)</strong>
+                  <p>Set the same custom header name and value as configured on the
+                     N-Genius webhook. Both fields must be set together or left empty.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">E</div>
+                <div>
+                  <strong>Webhook endpoint</strong>
+                  <p>Configure <code>/payment/ngenius/webhook</code> in N-Genius as the
+                     webhook URL. Odoo must be reachable on a public HTTPS domain.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num" style="font-size:12px;">F</div>
+                <div>
+                  <strong>Test end-to-end before going live</strong>
+                  <p>Complete a full sandbox purchase, confirm the return flow, and verify
+                     webhook delivery before switching the provider to Enabled.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">Supported Scope</span>
-            <h2>What is included, and where the boundary is.</h2>
+      <!-- ═══════════ TRANSACTION VISIBILITY ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <span class="tag">Transaction Visibility</span>
+          <h2>Full payment trail inside Odoo</h2>
+          <div class="history-grid">
+            <div class="h-card">
+              <h3>N-Genius order reference</h3>
+              <p>The N-Genius order reference is stored on the Odoo transaction so
+                 your team can tie each checkout event directly to the provider-side order.</p>
+            </div>
+            <div class="h-card">
+              <h3>Return + webhook sync</h3>
+              <p>Both the customer return and each webhook event trigger a fresh API lookup,
+                 keeping the Odoo transaction state consistent with what N-Genius holds as
+                 the authoritative record.</p>
+            </div>
+            <div class="h-card">
+              <h3>Refund audit trail</h3>
+              <p>Refunds and reversals remain visible in the Odoo transaction flow with the
+                 correct provider reference, supporting reconciliation and customer
+                 support cases.</p>
+            </div>
           </div>
-          <p class="intro">
-            This is a hosted redirect integration for merchants who want a clean operational bridge
-            between Odoo and N-Genius, not a custom embedded card-field implementation.
-          </p>
-        </div>
-        <div class="compare-grid">
-          <article class="compare-card supported">
-            <h3>Included in this module</h3>
-            <ul>
-              <li>Hosted redirect checkout for card payments</li>
-              <li>Sandbox and production environments</li>
-              <li>Return flow verification against N-Genius order data</li>
-              <li>Webhook-driven payment and refund status updates</li>
-              <li>Full refunds from Odoo when N-Genius exposes the required action</li>
-              <li>Optional billing address transmission when partner data is complete</li>
-            </ul>
-          </article>
-          <article class="compare-card boundary">
-            <h3>Not included</h3>
-            <ul>
-              <li>Tokenization or saved-card flows</li>
-              <li>Manual capture workflows</li>
-              <li>Partial refunds</li>
-              <li>Encrypted webhook payload decryption</li>
-              <li>Checkout on localhost or loopback callback hosts</li>
-              <li>Unsupported outlet currencies or merchant-account setup</li>
-            </ul>
-          </article>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">Go-Live Notes</span>
-            <h2>Operational details worth knowing before launch.</h2>
+      <!-- ═══════════ SCOPE ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <div class="hrow">
+            <div>
+              <span class="tag">Scope</span>
+              <h2>What is included — and where the boundary is</h2>
+            </div>
+            <p class="lead">
+              This is a hosted redirect integration for merchants who want a clean
+              operational bridge between Odoo and N-Genius. It is not an embedded
+              card-field or iFrame SDK implementation.
+            </p>
           </div>
-          <p class="intro">
-            These points come directly from the implemented flow and the practical constraints of
-            the N-Genius API.
-          </p>
-        </div>
-        <div class="notes">
-          <article class="note-card">
-            <h4>Public base URL required</h4>
-            <p>
-              <strong>Odoo must use a public hostname.</strong> The module rejects localhost and
-              loopback return URLs, and sandbox commonly refuses them as redirect targets.
-            </p>
-          </article>
-          <article class="note-card">
-            <h4>Webhook endpoint</h4>
-            <p>
-              Configure <code>/payment/ngenius/webhook</code> in N-Genius and keep the endpoint on
-              HTTPS with any required sandbox or production whitelisting completed.
-            </p>
-          </article>
-          <article class="note-card">
-            <h4>Currency alignment matters</h4>
-            <p>
-              N-Genius can reject order creation when the transaction currency is not enabled on
-              the configured outlet.
-            </p>
-          </article>
-          <article class="note-card">
-            <h4>3DS behavior is strict</h4>
-            <p>
-              The implementation only accepts fully authenticated ECI values and treats attempted
-              or incomplete 3-D Secure outcomes as failed payments.
-            </p>
-          </article>
-          <article class="note-card">
-            <h4>Billing address is optional</h4>
-            <p>
-              Odoo sends billing details only when partner name, street, city, and country are all
-              available.
-            </p>
-          </article>
-          <article class="note-card">
-            <h4>Encrypted webhooks are out of scope</h4>
-            <p>
-              The module expects standard JSON webhooks. If encrypted webhooks are enabled in
-              N-Genius, this module must be extended to decrypt them first.
-            </p>
-          </article>
+          <div class="scope-grid">
+            <div class="scope incl">
+              <h3 style="color:var(--green-dark);">Included in this module</h3>
+              <ul>
+                <li>Hosted redirect checkout for card payments</li>
+                <li>Sandbox and production environments</li>
+                <li>Return flow verification against the N-Genius order API</li>
+                <li>Webhook events: PURCHASED, CAPTURED, REFUNDED, CANCELLED, FAILED</li>
+                <li>Full refunds from Odoo with automatic void/reversal fallback</li>
+                <li>Optional webhook header name + value validation</li>
+                <li>Strict 3DS ECI enforcement (ECI 05 / Visa, ECI 02 / Mastercard)</li>
+                <li>Optional billing address transmission when partner data is complete</li>
+                <li>Zero-, two-, and three-decimal currency support (AED, KWD, JPY…)</li>
+              </ul>
+            </div>
+            <div class="scope excl">
+              <h3 style="color:var(--slate);">Not included</h3>
+              <ul>
+                <li>Tokenization or saved-card flows</li>
+                <li>Manual capture workflows</li>
+                <li>Partial refunds</li>
+                <li>Encrypted webhook payload decryption</li>
+                <li>Checkout on localhost or loopback callback hosts</li>
+                <li>Unsupported outlet currencies or merchant-account setup</li>
+                <li>Embedded card-field or iFrame/JS SDK checkout</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">Requirements</span>
-            <h2>What you need before installing.</h2>
+      <!-- ═══════════ GO-LIVE NOTES ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <span class="tag">Go-Live Notes</span>
+          <h2>Operational details worth knowing before launch</h2>
+          <div class="notes-grid" style="margin-top:22px;">
+            <div class="n-card">
+              <h4>Public base URL required</h4>
+              <p>Odoo must use a public hostname. The module rejects localhost and loopback
+                 return URLs, and the N-Genius sandbox also refuses them as redirect targets.</p>
+            </div>
+            <div class="n-card">
+              <h4>Webhook endpoint</h4>
+              <p>Configure <code>/payment/ngenius/webhook</code> in N-Genius.
+                 Keep the endpoint on HTTPS with any required sandbox or production
+                 IP/domain whitelisting completed before testing.</p>
+            </div>
+            <div class="n-card">
+              <h4>Currency alignment</h4>
+              <p>N-Genius can reject order creation when the transaction currency is not
+                 enabled on the configured outlet. Align currencies on both sides before
+                 going live.</p>
+            </div>
+            <div class="n-card">
+              <h4>3DS behavior is strict</h4>
+              <p>Only fully authenticated ECI values (05/Visa, 02/Mastercard) are accepted.
+                 Attempted or incomplete 3DS outcomes are marked as failed payments, not
+                 pending ones.</p>
+            </div>
+            <div class="n-card">
+              <h4>Billing address is optional</h4>
+              <p>The module sends billing details only when the partner name, street, city,
+                 and country are all present on the Odoo partner record. Missing fields
+                 are skipped gracefully.</p>
+            </div>
+            <div class="n-card">
+              <h4>Encrypted webhooks out of scope</h4>
+              <p>The module handles standard JSON webhooks. If N-Genius encrypted webhooks
+                 are enabled, the module must be extended to decrypt the payload before
+                 it can process the event.</p>
+            </div>
           </div>
-          <p class="intro">
-            The module is intended for businesses that already have N-Genius merchant access and
-            want to connect that service cleanly to Odoo 19.
-          </p>
-        </div>
-        <div class="requirements">
-          <article class="req-card">
-            <h3>Platform</h3>
-            <ul>
-              <li>Odoo 19.0</li>
-              <li>Payment and accounting features available</li>
-              <li>A public domain configured as the Odoo base URL</li>
-            </ul>
-          </article>
-          <article class="req-card">
-            <h3>N-Genius account</h3>
-            <ul>
-              <li>Active merchant account</li>
-              <li>Service account API key</li>
-              <li>Valid outlet reference</li>
-            </ul>
-          </article>
-          <article class="req-card">
-            <h3>Go-live readiness</h3>
-            <ul>
-              <li>Webhook URL configured in N-Genius</li>
-              <li>Optional secret header aligned on both sides</li>
-              <li>Outlet currencies matched with Odoo selling currencies</li>
-            </ul>
-          </article>
         </div>
       </section>
 
-      <section class="section panel">
-        <div class="heading-row">
-          <div>
-            <span class="kicker">FAQ</span>
-            <h2>Common pre-sales and go-live questions.</h2>
+      <!-- ═══════════ REQUIREMENTS ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <span class="tag">Requirements</span>
+          <h2>What you need before installing</h2>
+          <div class="req-grid" style="margin-top:22px;">
+            <div class="r-card">
+              <h3>Platform</h3>
+              <ul>
+                <li>Odoo 19.0</li>
+                <li>Payment and Accounting features enabled</li>
+                <li>A public domain configured as the Odoo base URL</li>
+                <li>HTTPS for the webhook endpoint</li>
+              </ul>
+            </div>
+            <div class="r-card">
+              <h3>N-Genius account</h3>
+              <ul>
+                <li>Active merchant account with Network International</li>
+                <li>Service account API key</li>
+                <li>Valid outlet reference</li>
+                <li>Outlet enabled for your selling currencies</li>
+              </ul>
+            </div>
+            <div class="r-card">
+              <h3>Go-live checklist</h3>
+              <ul>
+                <li>Webhook URL set to <code>/payment/ngenius/webhook</code></li>
+                <li>Optional secret header aligned on both sides</li>
+                <li>Outlet currencies matched with Odoo selling currencies</li>
+                <li>End-to-end sandbox test completed</li>
+              </ul>
+            </div>
           </div>
-          <p class="intro">
-            These are the questions merchants usually ask before rollout, especially when they are
-            validating domains, credentials, currencies, and refund expectations.
-          </p>
-        </div>
-        <div class="faq-grid">
-          <article class="faq-card">
-            <h3>Does Odoo collect card details?</h3>
-            <p>
-              No. Customers are redirected to the hosted N-Genius payment page, so card data is
-              entered on the provider side.
-            </p>
-          </article>
-          <article class="faq-card">
-            <h3>Can I test before going live?</h3>
-            <p>
-              Yes. Set the provider to test mode, configure sandbox credentials, and complete a
-              full return plus webhook cycle before enabling production.
-            </p>
-          </article>
-          <article class="faq-card">
-            <h3>Does it support partial refunds?</h3>
-            <p>
-              No. The implemented refund flow supports full refunds only.
-            </p>
-          </article>
-          <article class="faq-card">
-            <h3>Why can a valid setup still fail?</h3>
-            <p>
-              Common causes are an invalid public callback hostname, outlet currency mismatch, or a
-              webhook configuration that has not been whitelisted correctly in N-Genius.
-            </p>
-          </article>
         </div>
       </section>
 
+      <!-- ═══════════ FAQ ═══════════ -->
+      <section class="section card">
+        <div class="card-body">
+          <span class="tag">FAQ</span>
+          <h2>Common pre-sales and go-live questions</h2>
+          <div class="faq-grid" style="margin-top:22px;">
+            <div class="f-card">
+              <h3>Does Odoo collect or store card details?</h3>
+              <p>No. Customers are redirected to the N-Genius hosted payment page. Card data
+                 is entered and processed on the provider side. Odoo only receives a status
+                 update from the N-Genius API — never the card number itself.</p>
+            </div>
+            <div class="f-card">
+              <h3>Can I test before going live?</h3>
+              <p>Yes. Set the provider to Test mode, configure sandbox credentials, and
+                 complete a full purchase cycle — including return verification and a webhook
+                 delivery — before switching the state to Enabled (production).</p>
+            </div>
+            <div class="f-card">
+              <h3>Does it support partial refunds?</h3>
+              <p>No. The refund flow supports full refunds only. When N-Genius exposes a void
+                 or reversal action instead of a standard refund endpoint, the integration
+                 uses that action automatically.</p>
+            </div>
+            <div class="f-card">
+              <h3>Why would a valid setup still fail?</h3>
+              <p>Common causes: a non-public callback hostname (localhost is always rejected),
+                 an outlet currency mismatch, or a webhook URL that has not been whitelisted
+                 or correctly configured in the N-Genius portal.</p>
+            </div>
+            <div class="f-card">
+              <h3>What currencies are supported?</h3>
+              <p>All currencies your N-Genius outlet is enabled for. The module correctly
+                 handles zero-decimal (JPY, KRW…), two-decimal (AED, USD, EUR…), and
+                 three-decimal (KWD, BHD, OMR…) currencies using the N-Genius minor-units
+                 format.</p>
+            </div>
+            <div class="f-card">
+              <h3>Is the module compatible with Odoo Community or SaaS?</h3>
+              <p>The module is built for Odoo 19.0 and depends on the <code>payment</code>
+                 and <code>account_payment</code> modules. Verify that both are available in
+                 your edition before installing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ SUPPORT ═══════════ -->
       <section class="section">
         <div class="support">
-          <div class="support-copy">
-            <span class="kicker">Support</span>
-            <h2>Need help with installation, setup, or go-live checks?</h2>
-            <p>
-              Support is available for configuration, webhook setup, and deployment questions.
-              Reach out if you want help validating your Odoo domain, N-Genius credentials, or
-              rollout checklist before enabling the provider in production.
-            </p>
-            <p class="fine-print">
-              License: LGPL-3. This module is designed for Odoo 19 and for merchants using
-              N-Genius Online by Network International.
+          <div class="s-copy">
+            <span class="tag tag-inv" style="margin-bottom:16px;">Support</span>
+            <h2>Need help with setup, webhooks, or go-live?</h2>
+            <p>Support is available for configuration, webhook setup, and deployment
+               questions. Reach out to validate your Odoo domain, N-Genius credentials,
+               and rollout checklist before enabling production.</p>
+            <p class="s-note">
+              License: LGPL-3 &nbsp;·&nbsp; Built for Odoo 19.0
+              &nbsp;·&nbsp; N-Genius Online by Network International
             </p>
           </div>
-          <div class="actions">
-            <a class="button primary" href="mailto:connect@ashrf.in">connect@ashrf.in</a>
-            <a class="button secondary" href="https://www.ashrf.in" target="_blank">www.ashrf.in</a>
+          <div class="s-actions">
+            <a href="mailto:connect@ashrf.in" class="btn btn-white">connect@ashrf.in</a>
+            <a href="https://www.ashrf.in" target="_blank" class="btn btn-outline">www.ashrf.in</a>
           </div>
         </div>
       </section>
+
     </div>
   </body>
 </html>
