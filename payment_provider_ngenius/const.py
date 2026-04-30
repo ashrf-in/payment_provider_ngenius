@@ -11,7 +11,10 @@ API_URL_LIVE = 'https://api-gateway.ngenius-payments.com'
 AUTH_ENDPOINT = '/identity/auth/access-token'
 ORDER_ENDPOINT = '/transactions/outlets/{outlet_ref}/orders'
 ORDER_DETAIL_ENDPOINT = '/transactions/outlets/{outlet_ref}/orders/{order_ref}'
-REFUND_ENDPOINT = '/transactions/outlets/{outlet_ref}/orders/{order_ref}/payments/{payment_ref}/refund'
+REFUND_REL = 'cnp:refund'
+REFUND_DONE_STATES = ('SUCCESS', 'REFUNDED', 'PARTIALLY_REFUNDED')
+REFUND_PENDING_STATES = ('PENDING', 'IN_PROGRESS')
+REFUND_ERROR_STATES = ('FAILED', 'ERROR')
 
 # The codes of the payment methods to activate when N-Genius is activated.
 DEFAULT_PAYMENT_METHOD_CODES = {
@@ -23,7 +26,7 @@ DEFAULT_PAYMENT_METHOD_CODES = {
 # See N-Genius API documentation for exhaustive state list.
 STATUS_MAPPING = {
     'draft': ('STARTED',),
-    'pending': ('AWAITING_3DS_ENROLLMENT', 'AWAIT_3DS', 'PENDING'),
+    'pending': ('STARTED', 'AWAITING_3DS_ENROLLMENT', 'AWAIT_3DS', 'PENDING'),
     'authorized': ('AUTHORISED',),
     'done': ('PURCHASED', 'CAPTURED'),
     'cancel': ('CANCELLED', 'ABANDONED'),
@@ -46,6 +49,7 @@ HANDLED_WEBHOOK_EVENTS = [
     'CANCELLED',
     'FAILED',
 ]
+REFUND_WEBHOOK_EVENTS = ('REFUNDED', 'PARTIALLY_REFUNDED')
 
 # Currency code to minor units multiplier (N-Genius uses minor units)
 # Most currencies use 100 (e.g., USD cents, EUR cents, AED fils)

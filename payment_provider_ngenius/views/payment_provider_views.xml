@@ -15,6 +15,8 @@
                             (or <a href="https://portal.sandbox.ngenius-payments.com" target="_blank">Sandbox Portal</a> for testing)</li>
                         <li>Navigate to <strong>Settings → Integration → Service Accounts</strong> to get your API Key</li>
                         <li>Navigate to <strong>Settings → Organizational Hierarchy</strong> to find your Outlet Reference</li>
+                        <li>Configure your webhook URL as <strong>https://&lt;your-odoo-domain&gt;/payment/ngenius/webhook</strong></li>
+                        <li>Use HTTPS, complete N-Genius webhook whitelisting, and copy the same custom header name/value here if you secure the webhook with a secret header</li>
                     </ul>
                 </div>
             </xpath>
@@ -29,6 +31,12 @@
                            string="Outlet Reference"
                            required="code == 'ngenius' and state != 'disabled'"
                            placeholder="e.g., 12345678-1234-1234-1234-123456789012"/>
+                          <separator string="Webhook Security"/>
+                          <field name="ngenius_webhook_header_name"
+                              placeholder="e.g., X-Webhook-Token"/>
+                          <field name="ngenius_webhook_header_value"
+                              password="True"
+                              placeholder="Expected header value"/>
                 </group>
             </xpath>
         </field>

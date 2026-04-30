@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="purchase_pop.PurchasePopAction">
+        <div class="o_purchase_pop o_action d-flex flex-column h-100">
+
+            <t t-if="state.loading">
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </t>
+
+            <t t-else="">
+                <!-- HEADER -->
+                <div class="o_pop_header border-bottom bg-view px-3 py-2 d-flex flex-wrap justify-content-between align-items-center shadow-sm flex-shrink-0 gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa fa-shopping-cart fa-lg text-primary"/>
+                        <div>
+                            <div class="fw-bold fs-5 text-dark">Point of Purchase</div>
+                            <div class="text-muted small d-none d-md-block">Quick supplier ordering</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-grow-1 mx-lg-4 o_pop_header_controls flex-wrap">
+                        <select class="form-select bg-body-tertiary o_pop_header_select"
+                                t-on-change="onVendorChange">
+                            <option value="">— Select Supplier —</option>
+                            <t t-foreach="state.vendors" t-as="vendor" t-key="vendor.id">
+                                <option t-att-value="vendor.id"
+                                        t-att-selected="vendor.id === state.selectedVendorId ? 'selected' : undefined">
+                                    <t t-esc="vendor.display_name"/>
+                                </option>
+                            </t>
+                        </select>
+
+                        <t t-if="state.selectedVendorId and state.editableOrders.length > 0">
+                            <select class="form-select bg-body-tertiary o_pop_header_select border-primary text-primary fw-bold"
+                                    t-on-change="onOrderChange">
+                                <option value="">— New Order —</option>
+                                <t t-foreach="state.editableOrders" t-as="ed_order" t-key="ed_order.id">
+                                    <option t-att-value="ed_order.id"
+                                            t-att-selected="ed_order.id === state.selectedOrderId ? 'selected' : undefined">
+                                        Edit <t t-esc="ed_order.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </t>
+
+                        <t t-if="state.warehouses.length > 1">
+                            <select class="form-select bg-body-tertiary o_pop_header_select"
+                                    t-on-change="onWarehouseChange">
+                                <option value="">— All Warehouses —</option>
+                                <t t-foreach="state.warehouses" t-as="wh" t-key="wh.id">
+                                    <option t-att-value="wh.id"
+                                            t-att-selected="wh.id === state.selectedWarehouseId ? 'selected' : undefined">
+                                        <t t-esc="wh.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </t>
+
+                        <div class="d-flex gap-2 flex-grow-1">
+                            <input type="search"
+                                   class="form-control bg-body-tertiary"
+                                   placeholder="Search products (F2)..."
+                                   t-att-value="state.search"
+                                   t-on-input="onSearchInput"
+                                   t-on-keydown="onSearchKeydown"/>
+                            <button class="btn btn-primary" t-on-click="loadProducts">
+                                <i class="fa fa-search"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-1">
+                        <button t-att-class="'btn btn-light ' + (state.fullscreen ? 'text-primary' : 'text-muted')"
+                                t-on-click="toggleFullscreen"
+                                t-att-title="state.fullscreen ? 'Exit Fullscreen' : 'Fullscreen'">
+                            <i t-att-class="'fa ' + (state.fullscreen ? 'fa-compress' : 'fa-expand')"/>
+                        </button>
+                        <button class="btn btn-light text-muted" t-on-click="goHome" title="Close (Esc)">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                </div>
+
+                <t t-if="state.lastConfirmedPO">
+                    <div class="alert alert-success m-3 mb-0 d-flex justify-content-between align-items-start flex-shrink-0 flex-wrap gap-2">
+                        <span class="me-auto"><i class="fa fa-check-circle me-2"/>Order <strong><t t-esc="state.lastConfirmedPO.name"/></strong> was created successfully.</span>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <t t-if="state.lastConfirmedPO.receiptOrderCount &gt; 0">
+                                <button class="btn btn-sm btn-outline-success" t-on-click="printLastReceiptOrder">Print Receipt</button>
+                            </t>
+                            <button class="btn btn-sm btn-success" t-on-click="openLastPO">View Order</button>
+                            <button class="btn-close" t-on-click="dismissConfirmBanner"/>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- MOBILE FLOATING ACTIONS -->
+                <div class="o_pop_mobile_fab d-lg-none">
+                    <button class="o_pop_fab_btn" t-on-click="toggleMobileSidebar">
+                        <i class="fa fa-filter"/>
+                    </button>
+                    <button class="o_pop_fab_btn o_pop_fab_basket" t-on-click="toggleMobileBasket">
+                        <i class="fa fa-shopping-basket"/>
+                        <t t-if="state.orderLines.length">
+                            <span class="o_pop_fab_badge" t-esc="state.orderLines.length"/>
+                        </t>
+                    </button>
+                </div>
+
+                <!-- MOBILE BACKDROP -->
+                <t t-if="state.showMobileSidebar || state.showMobileBasket">
+                    <div class="o_pop_mobile_backdrop d-lg-none" t-on-click="closeMobileOverlays"/>
+                </t>
+
+                <!-- BODY -->
+                <div class="o_pop_body d-flex p-3 gap-3 flex-grow-1 overflow-hidden">
+
+                    <!-- Category Sidebar (collapsible tree) -->
+                    <aside t-att-class="'o_pop_sidebar d-flex flex-column bg-view border rounded shadow-sm flex-shrink-0' + (state.showMobileSidebar ? ' o_pop_sidebar_open' : '')">
+                        <div class="p-3 border-bottom fw-bold text-uppercase text-muted small d-flex justify-content-between align-items-center">
+                            <span><i class="fa fa-folder-open-o me-1"/> Categories</span>
+                            <button class="btn btn-sm btn-light d-lg-none" t-on-click="closeMobileOverlays"><i class="fa fa-times"/></button>
+                        </div>
+                        <div class="overflow-auto p-2 flex-grow-1">
+                            <!-- All Products root -->
+                            <button t-att-class="'o_pop_cat_btn btn w-100 text-start mb-1' + (!state.selectedCategoryId ? ' active' : '')"
+                                    t-on-click="() => this.selectCategory(false)">
+                                <span>All Products</span>
+                                <span class="badge bg-secondary float-end rounded-pill" t-esc="state.totalProducts"/>
+                            </button>
+                            <!-- Tree categories -->
+                            <t t-foreach="this.visibleCategories" t-as="cat" t-key="cat.id">
+                                <div class="d-flex align-items-center mb-1"
+                                     t-att-style="'padding-left: ' + (cat.depth * 1.25) + 'rem'">
+                                    <!-- Chevron toggle -->
+                                    <span t-att-class="'o_pop_tree_chevron me-1' + (cat.children.length ? '' : ' invisible')"
+                                          t-on-click.stop="(ev) => this.toggleCategoryExpand(ev, cat.id)">
+                                        <i t-att-class="'fa fa-fw ' + (state.expandedCategoryIds.includes(cat.id) ? 'fa-chevron-down' : 'fa-chevron-right')"/>
+                                    </span>
+                                    <button t-att-class="'o_pop_cat_btn btn flex-grow-1 text-start' + (state.selectedCategoryId === cat.id ? ' active' : '')"
+                                            t-on-click="() => this.selectCategory(cat.id)">
+                                        <span t-esc="cat.name"/>
+                                        <span class="badge bg-secondary float-end rounded-pill" t-esc="cat.product_count"/>
+                                    </button>
+                                </div>
+                            </t>
+                        </div>
+                    </aside>
+
+                    <!-- Product Grid -->
+                    <main class="d-flex flex-column bg-view border rounded shadow-sm flex-grow-1 overflow-hidden">
+                        <div class="p-3 border-bottom fw-bold text-uppercase text-muted small d-flex align-items-center">
+                            <i class="fa fa-cubes me-1"/> Products
+                            <t t-if="state.products.length">
+                                <span class="badge bg-primary ms-2 rounded-pill" t-esc="state.products.length"/>
+                            </t>
+                        </div>
+
+                        <t t-if="state.loadingProducts">
+                            <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                                <div class="spinner-border text-primary" role="status"/>
+                            </div>
+                        </t>
+                        <t t-elif="!state.products.length">
+                            <div class="d-flex align-items-center justify-content-center flex-grow-1 text-muted">
+                                <div class="text-center">
+                                    <i class="fa fa-search fa-3x mb-3 text-300"/>
+                                    <p>No products found.</p>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="o_pop_product_grid p-3 overflow-auto d-flex flex-wrap gap-3 align-content-start" t-else="">
+                            <t t-foreach="state.products" t-as="product" t-key="product.id">
+                                <t t-set="inBasket" t-value="this.getBasketQty(product.id)"/>
+                                <div class="o_pop_card_wrapper" t-on-mouseenter="() => this.onProductMouseEnter(product.id)"
+                                     t-on-mouseleave="() => this.onProductMouseLeave()">
+                                    <button t-att-class="'o_pop_product_card' + (inBasket ? ' active' : '')"
+                                            t-on-click="() => this.addProduct(product)">
+                                        <t t-if="inBasket">
+                                            <span class="o_pop_card_badge" t-esc="inBasket"/>
+                                        </t>
+                                        <div class="o_pop_card_img_wrap">
+                                            <img t-att-src="'/web/image/product.product/' + product.id + '/image_128'"
+                                                 class="o_pop_card_img" loading="lazy" alt=""
+                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+                                            <div class="o_pop_card_img_placeholder" style="display:none">
+                                                <i class="fa fa-cube"/>
+                                            </div>
+                                        </div>
+                                        <div class="o_pop_product_code text-muted small" style="font-family: monospace;" t-esc="product.default_code || product.barcode || ''"/>
+                                        <div class="fw-bold mt-1 o_pop_product_name" t-esc="product.name"/>
+                                        <div class="o_pop_card_footer mt-auto pt-2 d-flex justify-content-between align-items-center">
+                                            <span class="o_pop_card_stock text-muted small fw-semibold">
+                                                <i class="fa fa-cubes me-1"/> <t t-esc="product.qty_available"/> in stock
+                                            </span>
+                                            <span class="o_pop_price fw-bold" t-esc="this.formatCurrency(product.price || 0)"/>
+                                        </div>
+                                    </button>
+                                    <!-- Purchase History Tooltip -->
+                                    <t t-if="state.hoveredProductId === product.id &amp;&amp; (state.historyData || state.historyLoading)">
+                                        <div class="o_pop_history_tooltip">
+                                            <t t-if="state.historyLoading">
+                                                <div class="text-center p-2 text-muted small">
+                                                    <span class="spinner-border spinner-border-sm me-1"/>Loading...
+                                                </div>
+                                            </t>
+                                            <t t-elif="state.historyData &amp;&amp; state.historyData.history.length">
+                                                <div class="o_pop_history_header">
+                                                    <i class="fa fa-history me-1"/>Purchase History
+                                                </div>
+                                                <div class="o_pop_history_summary">
+                                                    <div><span class="text-muted">Last:</span> <t t-esc="state.historyData.last_date"/></div>
+                                                    <div><span class="text-muted">Vendor:</span> <t t-esc="state.historyData.last_vendor"/></div>
+                                                    <div><span class="text-muted">Price:</span> <t t-esc="this.formatCurrency(state.historyData.last_price)"/></div>
+                                                </div>
+                                                <table class="table table-sm table-borderless mb-0 small">
+                                                    <t t-foreach="state.historyData.history" t-as="h" t-key="h_index">
+                                                        <tr>
+                                                            <td class="text-muted py-0" t-esc="h.date"/>
+                                                            <td class="py-0 text-end"><t t-esc="h.qty"/> <t t-esc="h.uom"/></td>
+                                                            <td class="py-0 text-end fw-semibold" t-esc="this.formatCurrency(h.price)"/>
+                                                        </tr>
+                                                    </t>
+                                                </table>
+                                            </t>
+                                            <t t-else="">
+                                                <div class="text-center p-2 text-muted small">
+                                                    <i class="fa fa-info-circle me-1"/>No purchase history
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </main>
+
+                    <!-- Basket + Numpad -->
+                    <section t-att-class="'o_pop_basket_panel d-flex flex-column bg-view border rounded shadow-sm flex-shrink-0' + (state.showMobileBasket ? ' o_pop_basket_open' : '')">
+                        <div class="p-3 border-bottom fw-bold text-uppercase text-muted small d-flex align-items-center justify-content-between flex-shrink-0">
+                            <div><i class="fa fa-shopping-basket me-1"/> Active Order</div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <t t-if="state.orderLines.length">
+                                    <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" t-on-click="clearBasket">
+                                        <i class="fa fa-trash me-1"/> Clear
+                                    </button>
+                                </t>
+                                <button class="btn btn-sm btn-light d-lg-none" t-on-click="closeMobileOverlays"><i class="fa fa-times"/></button>
+                            </div>
+                        </div>
+
+                        <!-- Order lines — THIS is the only scrollable area -->
+                        <div class="flex-grow-1 overflow-auto p-2" style="min-height: 0;">
+                            <t t-if="!state.orderLines.length">
+                                <div class="text-muted text-center p-4">
+                                    <i class="fa fa-inbox fa-3x mb-3 d-block"/>
+                                    Basket is empty.<br/>Select products to order.
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <t t-foreach="state.orderLines" t-as="line" t-key="line.product_id">
+                                    <t t-set="belowMin" t-value="line.min_qty &gt; 0 &amp;&amp; line.qty &lt; line.min_qty"/>
+                                    <t t-set="isSwiped" t-value="state.swipedLineId === line.product_id"/>
+                                    <div class="o_pop_swipe_container">
+                                        <div t-att-class="'o_pop_order_line p-2 mb-2 rounded border d-flex justify-content-between align-items-start cursor-pointer' + (state.selectedLineId === line.product_id ? ' border-primary o_pop_line_selected' : ' bg-body-tertiary') + (belowMin ? ' o_pop_line_warning' : '') + (isSwiped ? ' o_pop_line_swiped' : '')"
+                                             t-on-click="() => this.selectLine(line.product_id)"
+                                             t-on-touchstart="(ev) => this.onLineTouchStart(ev)"
+                                             t-on-touchend="(ev) => this.onLineTouchEnd(ev, line.product_id)">
+                                            <div style="min-width: 0;" class="flex-grow-1">
+                                                <div class="fw-bold text-truncate" t-esc="line.name"/>
+                                                <div class="text-muted small">
+                                                    <t t-esc="this.formatCurrency(line.price || 0)"/>
+                                                    × <t t-esc="line.qty"/> <t t-esc="line.uom_name"/>
+                                                    <span class="fw-semibold ms-1" t-esc="'= ' + this.formatCurrency((line.price || 0) * line.qty)"/>
+                                                </div>
+                                                <t t-if="belowMin">
+                                                    <div class="o_pop_min_qty_warn small mt-1">
+                                                        <i class="fa fa-exclamation-triangle me-1"/>Min qty: <t t-esc="line.min_qty"/> <t t-esc="line.uom_name"/>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                <span class="badge bg-secondary fs-6 rounded-pill">
+                                                    <t t-esc="line.qty"/> <t t-esc="line.uom_name"/>
+                                                </span>
+                                                <t t-if="line.qty_received > 0">
+                                                    <span class="badge bg-info text-dark fs-6 rounded-pill ms-1" title="Received">
+                                                        Rcv: <t t-esc="line.qty_received"/>
+                                                    </span>
+                                                </t>
+                                                <button class="btn btn-sm text-danger p-1 d-none d-lg-inline-block"
+                                                        t-on-click.stop="() => this.removeLine(line.product_id)">
+                                                    <i class="fa fa-times"/>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <t t-if="isSwiped">
+                                            <button class="o_pop_swipe_delete btn btn-danger"
+                                                    t-on-click.stop="() => this.removeLine(line.product_id)">
+                                                <i class="fa fa-trash fa-lg"/>
+                                            </button>
+                                        </t>
+                                    </div>
+                                </t>
+                            </t>
+                        </div>
+
+                        <!-- PINNED BOTTOM: Numpad + Footer  (flex-shrink-0 keeps them fixed) -->
+                        <div class="flex-shrink-0">
+                            <!-- Touch Numpad -->
+                            <div t-att-class="'o_pop_numpad border-top' + (state.selectedLineId ? ' o_pop_numpad_open' : '')">
+                                <t t-if="state.selectedLineId">
+                                    <div class="p-2 d-flex justify-content-between align-items-center border-bottom bg-view">
+                                        <span class="text-primary fw-bold small text-uppercase">
+                                            Qty: <t t-esc="state.numpadTempValue || getSelectedLineQty()"/>
+                                        </span>
+                                        <button class="btn btn-sm btn-primary rounded-pill px-3" t-on-click="applyNumpadValue">Done</button>
+                                    </div>
+                                    <div class="d-grid o_pop_numpad_grid">
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('7')">7</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('8')">8</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('9')">9</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('4')">4</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('5')">5</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('6')">6</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('1')">1</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('2')">2</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('3')">3</button>
+                                        <button class="btn btn-secondary rounded-0 py-3 fs-5 fw-bold border-0 text-white" t-on-click="() => this.onNumpadPress('-1')">−1</button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('0')">0</button>
+                                        <button class="btn btn-secondary rounded-0 py-3 fs-5 fw-bold border-0 text-white" t-on-click="() => this.onNumpadPress('+1')">+1</button>
+                                        <button class="btn btn-danger rounded-0 py-2 fw-bold border-0" t-on-click="() => this.onNumpadPress('BACKSPACE')">
+                                            <i class="fa fa-long-arrow-left"/>
+                                        </button>
+                                        <button class="btn btn-light rounded-0 py-3 fs-4 fw-bold border-0" t-on-click="() => this.onNumpadPress('.')">.</button>
+                                        <button class="btn btn-primary rounded-0 py-2 fw-bold border-0 text-white" t-on-click="applyNumpadValue">
+                                            <i class="fa fa-check me-1"/> Done
+                                        </button>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Footer: total + confirm -->
+                            <div class="o_pop_basket_footer p-3 border-top bg-view">
+                                <t t-if="state.orderLines.length">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small text-uppercase fw-bold">Estimated Total</span>
+                                        <span class="fs-5 fw-bold text-dark" t-esc="this.formatCurrency(this.totalAmount)"/>
+                                    </div>
+                                    <t t-if="this.hasMinQtyWarnings">
+                                        <div class="alert alert-warning py-1 px-2 small mb-2 d-flex align-items-center">
+                                            <i class="fa fa-exclamation-triangle me-2"/>
+                                            Some lines are below vendor minimum quantities.
+                                        </div>
+                                    </t>
+                                </t>
+                                <textarea class="form-control bg-body-tertiary mb-3"
+                                          rows="2"
+                                          placeholder="Internal Note..."
+                                          style="resize: none;"
+                                          t-model="state.note"/>
+                                <button class="btn btn-lg btn-primary w-100 fw-bold"
+                                        t-att-disabled="state.submitting || !state.orderLines.length"
+                                        t-on-click="requestConfirm">
+                                    <t t-if="state.submitting">
+                                        <span class="spinner-border spinner-border-sm me-2"/> Processing...
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-paper-plane me-2"/> 
+                                        <t t-if="state.selectedOrderId">Update Order</t>
+                                        <t t-else="">Create Purchase</t>
+                                        (<t t-esc="this.totalItems"/> units)
+                                    </t>
+                                </button>
+                                <div class="text-center text-muted small mt-2 d-lg-none">
+                                    <i class="fa fa-calculator me-1"/> Use numpad to edit quantities
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ── Confirmation Dialog ── -->
+                <t t-if="state.showConfirmDialog">
+                    <div class="o_pop_dialog_overlay" t-on-click="cancelConfirmDialog">
+                        <div class="o_pop_dialog" t-on-click.stop="">
+                            <div class="o_pop_dialog_header">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-check-circle me-2 text-primary"/>
+                                    <t t-if="state.selectedOrderId">Update Purchase Order</t>
+                                    <t t-else="">Confirm Purchase Order</t>
+                                </h5>
+                                <button class="btn-close" t-on-click="cancelConfirmDialog"/>
+                            </div>
+                            <div class="o_pop_dialog_body">
+                                <div class="d-flex gap-4 mb-3 flex-wrap">
+                                    <div>
+                                        <span class="text-muted small text-uppercase">Vendor</span>
+                                        <div class="fw-bold fs-5" t-esc="this.selectedVendorName"/>
+                                    </div>
+                                    <t t-if="this.selectedWarehouseName">
+                                        <div>
+                                            <span class="text-muted small text-uppercase">Warehouse</span>
+                                            <div class="fw-bold fs-5" t-esc="this.selectedWarehouseName"/>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="table-responsive">
+                                <table class="table table-sm mb-3">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-end">Qty</th>
+                                            <th class="text-end">Unit Price</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.orderLines" t-as="line" t-key="line.product_id">
+                                            <tr t-att-class="(line.min_qty > 0 &amp;&amp; line.qty &lt; line.min_qty) ? 'table-warning' : ''">
+                                                <td>
+                                                    <div class="fw-semibold" t-esc="line.name"/>
+                                                    <t t-if="line.min_qty > 0 &amp;&amp; line.qty &lt; line.min_qty">
+                                                        <small class="text-warning"><i class="fa fa-exclamation-triangle me-1"/>Below min qty (<t t-esc="line.min_qty"/>)</small>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end"><t t-esc="line.qty"/> <small class="text-muted" t-esc="line.uom_name"/></td>
+                                                <td class="text-end" t-esc="this.formatCurrency(line.price || 0)"/>
+                                                <td class="text-end fw-semibold" t-esc="this.formatCurrency((line.price || 0) * line.qty)"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">Estimated Total</td>
+                                            <td class="text-end fw-bold fs-5" t-esc="this.formatCurrency(this.totalAmount)"/>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                </div>
+                                <t t-if="state.note">
+                                    <div class="mb-2">
+                                        <span class="text-muted small text-uppercase">Note</span>
+                                        <div class="border rounded p-2 bg-body-tertiary small" t-esc="state.note"/>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="o_pop_dialog_footer">
+                                <button class="btn btn-light" t-on-click="cancelConfirmDialog">
+                                    <i class="fa fa-arrow-left me-1"/> Go Back
+                                </button>
+                                <button class="btn btn-primary btn-lg fw-bold" t-on-click="confirmOrder"
+                                        t-att-disabled="state.submitting">
+                                    <t t-if="state.submitting">
+                                        <span class="spinner-border spinner-border-sm me-2"/> Processing...
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-paper-plane me-2"/> 
+                                        <t t-if="state.selectedOrderId">Update PO</t>
+                                        <t t-else="">Confirm &amp; Create PO</t>
+                                    </t>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </div>
+    </t>
+</templates>

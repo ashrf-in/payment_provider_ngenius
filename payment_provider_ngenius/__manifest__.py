@@ -1,27 +1,28 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 {
-    'name': 'Payment Provider: N-Genius',
-    'version': '19.0.1.0.0',
+    'name': 'N-Genius Payment Provider',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Payment Providers',
     'sequence': 350,
-    'summary': "Accept card payments via N-Genius by Network International.",
+    'summary': "Accept online payments with N-Genius by Network International.",
     'description': """
 N-Genius Payment Provider for Odoo
 ==================================
 
-This module integrates the N-Genius payment gateway by Network International 
-into Odoo, enabling merchants to accept card payments securely.
+Accept online payments in Odoo with N-Genius Online by Network International.
+
+This module adds N-Genius as a payment option in Odoo and gives merchants a
+simple way to offer a secure hosted payment flow to customers.
 
 Features:
-- Card payments (Visa, Mastercard, American Express)
-- 3D Secure (3DS2) authentication with strict ECI validation
-- Sandbox and Production environment support
-- Refund support
-- Webhook notifications
-- Hosted Payment Page (redirect flow)
+- Secure hosted checkout experience
+- Sandbox and production environments
+- Automatic payment status updates in Odoo
+- Full refund support from Odoo
 
-For more information, visit: https://www.network.ae/en/solutions/partners/n-genius
+Requires an active N-Genius merchant account from Network International and
+valid credentials.
     """,
     'depends': ['payment', 'account_payment'],
     'data': [
@@ -33,10 +34,15 @@ For more information, visit: https://www.network.ae/en/solutions/partners/n-geni
     'author': 'Ashraf',
     'website': 'https://www.ashrf.in',
     'maintainer': 'Ashraf',
-    'support': 'hi@ashrf.in',
+    'support': 'connect@ashrf.in',
     'license': 'LGPL-3',
     'installable': True,
     'application': False,
     'auto_install': False,
-    'images': ['static/description/icon.png'],
+    'images': [
+        'static/description/thumb.png',
+        'static/description/main_screenshot.png',
+        'static/description/config_screenshot.png',
+        'static/description/checkout_screenshot.png',
+    ],
 }

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_vendor_bill_ai" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.vendor.bill.ai</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='account_vendor_bills']" position="inside">
+                <setting id="vendor_bill_ai_parser_setting"
+                         string="AI Vendor Bill Parser"
+                         company_dependent="1"
+                         help="Parse PDF and image vendor bills with OpenAI-compatible or Google Gemini models.">
+                    <field name="vendor_bill_ai_mode"/>
+                    <div class="content-group" invisible="vendor_bill_ai_mode == 'disabled'">
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_provider" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_provider" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_model" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_model" class="col-lg-8" placeholder="e.g. gpt-4.1-mini or gemini-2.5-pro"/>
+                        </div>
+                        <div class="row mt8" invisible="vendor_bill_ai_provider != 'openai_compatible'">
+                            <label for="vendor_bill_ai_base_url" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_base_url" class="col-lg-8" placeholder="https://provider.example/v1"/>
+                        </div>
+                        <div class="row mt8" groups="base.group_system">
+                            <label for="vendor_bill_ai_api_key" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_api_key" class="col-lg-8" placeholder="API key"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_data_transfer_consent" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_data_transfer_consent" class="col-lg-8"/>
+                        </div>
+                        <div class="text-muted mt8">
+                            Vendor bill attachments and extracted accounting data are sent to the selected external AI provider. Parsing stays disabled until this consent is enabled.
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_confidence_threshold" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_confidence_threshold" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_timeout" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_timeout" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_auto_create_vendor" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_auto_create_vendor" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt8">
+                            <label for="vendor_bill_ai_extra_instructions" class="col-lg-4 o_light_label"/>
+                            <field name="vendor_bill_ai_extra_instructions" class="col-lg-8" placeholder="Optional extraction instructions"/>
+                        </div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>
