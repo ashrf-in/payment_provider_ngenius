@@ -11,7 +11,10 @@ def get_api_key(provider_sudo):
     :return: The API key
     :rtype: str
     """
-    return provider_sudo.ngenius_api_key
+    api_key = (provider_sudo.ngenius_api_key or '').strip()
+    if api_key.lower().startswith('basic '):
+        api_key = api_key[6:].strip()
+    return api_key
 
 
 def get_outlet_ref(provider_sudo):
@@ -36,14 +39,23 @@ def format_billing_address(partner):
     """
     if not partner:
         return {}
-    
-    return {
-        'firstName': partner.name.split()[0] if partner.name else '',
-        'lastName': ' '.join(partner.name.split()[1:]) if partner.name and len(partner.name.split()) > 1 else partner.name or 'Admin',
-        'address1': partner.street or '',
-        'city': partner.city or '',
-        'countryCode': partner.country_id.code or '',
+
+    name_parts = (partner.name or '').split()
+    if not name_parts:
+        return {}
+
+    billing_address = {
+        'firstName': name_parts[0],
+        'lastName': ' '.join(name_parts[1:]) if len(name_parts) > 1 else name_parts[0],
+        'address1': (partner.street or '').strip(),
+        'city': (partner.city or '').strip(),
+        'countryCode': (partner.country_id.code or '').strip(),
     }
+
+    if not all(billing_address[field] for field in ('address1', 'city', 'countryCode')):
+        return {}
+
+    return billing_address
 
 
 def include_billing_address(tx_sudo):

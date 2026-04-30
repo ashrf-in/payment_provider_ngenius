@@ -1,6 +1,8 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import ipaddress
 import re
+from urllib.parse import urlparse
 
 from werkzeug.urls import url_encode
 
@@ -73,6 +75,21 @@ class PaymentTransaction(models.Model):
 
         # Build redirect URL that includes the Odoo transaction reference
         base_url = self.provider_id.get_base_url()
+        parsed_base_url = urlparse(base_url)
+        hostname = parsed_base_url.hostname or ''
+        try:
+            is_loopback = ipaddress.ip_address(hostname).is_loopback
+        except ValueError:
+            is_loopback = hostname == 'localhost'
+
+        if hostname == 'localhost' or is_loopback:
+            raise ValidationError(_(
+                "N-Genius: The Odoo base URL '%(base_url)s' cannot be used as a payment return "
+                "URL. Configure a non-local hostname in Settings > Technical > System "
+                "Parameters (`web.base.url`) or use a public tunnel/domain.",
+                base_url=base_url,
+            ))
+
         redirect_url = f"{base_url}{NGeniusController._return_url}?{url_encode({'reference': self.reference})}"
 
         payload = {
@@ -86,9 +103,12 @@ class PaymentTransaction(models.Model):
                 'skipConfirmationPage': True,
             },
             'merchantOrderReference': sanitized_reference,
-            'emailAddress': self.partner_email or '',
-            'billingAddress': billing_address,
         }
+
+        if self.partner_email:
+            payload['emailAddress'] = self.partner_email.strip()
+        if billing_address:
+            payload['billingAddress'] = billing_address
 
 
         response_data = self.provider_id._ngenius_make_request(
@@ -133,10 +153,33 @@ class PaymentTransaction(models.Model):
         return {}
 
     @staticmethod
+    def _ngenius_get_refund_link_from_payment_data(payment_data):
+        """Return the refund link from a payment payload when available."""
+        refund_link = payment_data.get('_links', {}).get(const.REFUND_REL, {}).get('href')
+        if refund_link:
+            return refund_link
+
+        payment_self_href = payment_data.get('_links', {}).get('self', {}).get('href', '')
+        purchase_id = payment_data.get('purchaseData', {}).get('id')
+        if payment_self_href and purchase_id:
+            return f"{payment_self_href}/purchases/{purchase_id}/refund"
+
+        capture_id = payment_data.get('captureData', {}).get('id')
+        if payment_self_href and capture_id:
+            return f"{payment_self_href}/captures/{capture_id}/refund"
+
+        return ''
+
+    @staticmethod
+    def _ngenius_get_void_link_from_payment_data(payment_data):
+        """Return the void link from a payment payload when available."""
+        return payment_data.get('_links', {}).get('cnp:cancel', {}).get('href', '')
+
+    @staticmethod
     def _ngenius_get_refund_link_from_order_data(order_data):
         """Return the documented refund link from the order's payment object."""
         for payment in PaymentTransaction._ngenius_get_order_payments(order_data):
-            refund_link = payment.get('_links', {}).get(const.REFUND_REL, {}).get('href')
+            refund_link = PaymentTransaction._ngenius_get_refund_link_from_payment_data(payment)
             if refund_link:
                 return refund_link
 
@@ -183,11 +226,32 @@ class PaymentTransaction(models.Model):
             'GET', order_endpoint, access_token=access_token
         )
 
-        refund_endpoint = self._ngenius_get_refund_link_from_order_data(order_data)
-        if not refund_endpoint:
+        operation_method = ''
+        operation_endpoint = ''
+        for payment in self._ngenius_get_order_payments(order_data):
+            payment_data = payment
+            payment_self_href = payment.get('_links', {}).get('self', {}).get('href')
+            if payment_self_href:
+                payment_data = self.provider_id._ngenius_make_request(
+                    'GET', payment_self_href, access_token=access_token
+                )
+
+            refund_endpoint = self._ngenius_get_refund_link_from_payment_data(payment_data)
+            if refund_endpoint and payment_data.get('purchaseData', {}).get('displayRefund', True):
+                operation_method = 'POST'
+                operation_endpoint = refund_endpoint
+                break
+
+            void_endpoint = self._ngenius_get_void_link_from_payment_data(payment_data)
+            if void_endpoint and payment_data.get('purchaseData', {}).get('displayVoid'):
+                operation_method = 'PUT'
+                operation_endpoint = void_endpoint
+                break
+
+        if not operation_endpoint:
             raise ValidationError(_(
-                "N-Genius: This transaction is not refundable yet. The payment must be purchased "
-                "or captured before a refund can be requested."
+                "N-Genius: This transaction is not refundable yet. The payment must expose a "
+                "refund or reversal action before a refund can be requested."
             ))
 
         amount_minor = payment_utils.to_minor_currency_units(
@@ -196,11 +260,16 @@ class PaymentTransaction(models.Model):
             arbitrary_decimal_number=const.CURRENCY_DECIMALS.get(self.currency_id.name, 2),
         )
 
+        request_kwargs = {'access_token': access_token}
+        if operation_method == 'POST':
+            request_kwargs['data'] = {
+                'amount': {'currencyCode': self.currency_id.name, 'value': amount_minor}
+            }
+
         refund_data = self.provider_id._ngenius_make_request(
-            'POST',
-            refund_endpoint,
-            data={'amount': {'currencyCode': self.currency_id.name, 'value': amount_minor}},
-            access_token=access_token,
+            operation_method,
+            operation_endpoint,
+            **request_kwargs,
         )
 
         # Process refund response
@@ -280,17 +349,22 @@ class PaymentTransaction(models.Model):
                 return
 
             refund = self._ngenius_get_latest_refund(payment)
+            payment_state = payment.get('state', '')
             refund_reference = self._ngenius_extract_reference_from_href(
                 refund.get('_links', {}).get('self', {}).get('href', '')
             )
+            if not refund_reference and payment_state in ('REVERSED', 'CANCELLED'):
+                refund_reference = self._ngenius_extract_reference_from_href(
+                    payment.get('_links', {}).get('self', {}).get('href', '')
+                ) or payment.get('reference', '')
             if refund_reference:
                 self.provider_reference = refund_reference
 
             refund_state = refund.get('state', '')
-            payment_state = payment.get('state', '')
             if (
                 refund_state in const.REFUND_DONE_STATES
                 or payment_state in const.REFUND_DONE_STATES
+                or payment_state in ('REVERSED', 'CANCELLED')
             ):
                 self._set_done()
                 self.env.ref('payment.cron_post_process_payment_tx')._trigger()

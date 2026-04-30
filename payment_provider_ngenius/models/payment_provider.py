@@ -18,6 +18,42 @@ _logger = get_payment_logger(__name__, const.SENSITIVE_KEYS)
 class PaymentProvider(models.Model):
     _inherit = 'payment.provider'
 
+    @staticmethod
+    def _ngenius_extract_error_details(response):
+        """Return a concise API error payload for logs and validation messages."""
+        if response is None:
+            return ''
+
+        try:
+            payload = response.json()
+        except ValueError:
+            return (response.text or '').strip()[:500]
+
+        if isinstance(payload, dict):
+            for key in ('errors', 'error', 'violations'):
+                value = payload.get(key)
+                if value:
+                    if isinstance(value, list):
+                        messages = [
+                            item.get('localizedMessage') or item.get('message') or str(item)
+                            for item in value
+                        ]
+                        return '; '.join(filter(None, messages))[:500]
+                    if isinstance(value, dict):
+                        return (
+                            value.get('localizedMessage')
+                            or value.get('message')
+                            or json.dumps(value, sort_keys=True)
+                        )[:500]
+                    return str(value)[:500]
+
+            for key in ('message', 'detail', 'error_description'):
+                value = payload.get(key)
+                if value:
+                    return str(value)[:500]
+
+        return json.dumps(payload, sort_keys=True)[:500]
+
     code = fields.Selection(
         selection_add=[('ngenius', "N-Genius")], ondelete={'ngenius': 'set default'})
     ngenius_api_key = fields.Char(
@@ -114,15 +150,37 @@ class PaymentProvider(models.Model):
         headers = {
             'Authorization': f'Basic {api_key}',
             'Content-Type': 'application/vnd.ni-identity.v1+json',
+            'Accept': 'application/vnd.ni-identity.v1+json',
         }
 
         try:
 
-            response = requests.post(endpoint, headers=headers, timeout=10)
+            response = requests.post(
+                endpoint,
+                json={'realmName': 'ni'},
+                headers=headers,
+                timeout=10,
+            )
             response.raise_for_status()
             data = response.json()
 
             return data.get('access_token')
+        except requests.exceptions.HTTPError as error:
+            error_details = self._ngenius_extract_error_details(error.response)
+            if error_details:
+                _logger.exception(
+                    "Unable to authenticate with N-Genius: %s. Response: %s",
+                    error, error_details,
+                )
+                raise ValidationError(_(
+                    "N-Genius: Unable to authenticate. %(details)s",
+                    details=error_details,
+                )) from error
+
+            _logger.exception("Unable to authenticate with N-Genius: %s", error)
+            raise ValidationError(_(
+                "N-Genius: Unable to authenticate. Please check your API credentials."
+            )) from error
         except requests.exceptions.RequestException as error:
             _logger.exception("Unable to authenticate with N-Genius: %s", error)
             raise ValidationError(_(
@@ -161,6 +219,22 @@ class PaymentProvider(models.Model):
             )
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as error:
+            error_details = self._ngenius_extract_error_details(error.response)
+            if error_details:
+                _logger.exception(
+                    "N-Genius API request failed: %s. Response: %s",
+                    error, error_details,
+                )
+                raise ValidationError(_(
+                    "N-Genius: API request failed. %(details)s",
+                    details=error_details,
+                )) from error
+
+            _logger.exception("N-Genius API request failed: %s", error)
+            raise ValidationError(_(
+                "N-Genius: API request failed. Please check your configuration."
+            )) from error
         except requests.exceptions.RequestException as error:
             _logger.exception("N-Genius API request failed: %s", error)
             raise ValidationError(_(

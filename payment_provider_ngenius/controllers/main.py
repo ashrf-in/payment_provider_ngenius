@@ -125,8 +125,10 @@ class NGeniusController(http.Controller):
         try:
             event_name = event.get('eventName', '')
             if event_name and event_name not in const.HANDLED_WEBHOOK_EVENTS:
-                _logger.info("N-Genius: Ignoring unsupported webhook event %s", event_name)
-                return request.make_json_response('')
+                _logger.info(
+                    "N-Genius: Received unlisted webhook event %s; processing order status anyway",
+                    event_name,
+                )
 
             provider_sudo = self._get_ngenius_provider_from_event(event)
             if not provider_sudo:
@@ -176,5 +178,7 @@ class NGeniusController(http.Controller):
             tx_sudo._process('ngenius', payment_data)
         except ValidationError:
             _logger.exception("Unable to process the webhook; skipping to acknowledge")
+        except Exception:
+            _logger.exception("Unexpected error while processing the webhook; acknowledging")
         
         return request.make_json_response('')

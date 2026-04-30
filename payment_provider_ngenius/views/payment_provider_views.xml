@@ -15,6 +15,8 @@
                             (or <a href="https://portal.sandbox.ngenius-payments.com" target="_blank">Sandbox Portal</a> for testing)</li>
                         <li>Navigate to <strong>Settings → Integration → Service Accounts</strong> to get your API Key</li>
                         <li>Navigate to <strong>Settings → Organizational Hierarchy</strong> to find your Outlet Reference</li>
+                        <li>Configure your webhook URL as <strong>https://&lt;your-odoo-domain&gt;/payment/ngenius/webhook</strong></li>
+                        <li>Use HTTPS, complete N-Genius webhook whitelisting, and copy the same custom header name/value here if you secure the webhook with a secret header</li>
                     </ul>
                 </div>
             </xpath>

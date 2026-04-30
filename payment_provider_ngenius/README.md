@@ -58,7 +58,10 @@ From Odoo, your team can:
 2. Open the N-Genius payment provider settings.
 3. Add your API key and outlet reference.
 4. Choose test mode or live mode.
-5. Publish the provider and start accepting payments.
+5. Configure the N-Genius webhook in the merchant portal to point to your Odoo endpoint:
+   `https://<your-odoo-domain>/payment/ngenius/webhook`
+6. Use an HTTPS endpoint, configure a custom header key and value in both N-Genius and Odoo, and complete N-Genius webhook whitelisting for sandbox/live.
+7. Publish the provider and start accepting payments.
 
 ## Requirements
 
@@ -71,6 +74,8 @@ From Odoo, your team can:
 - The module uses a hosted payment page for a safer customer checkout journey.
 - Full refunds are supported.
 - Sandbox mode is available for testing before going live.
+- Automatic backend status updates depend on a working N-Genius webhook configuration.
+- The module validates webhook custom headers, but it does not currently decrypt encrypted webhook payloads from the optional N-Genius webhook-encryption feature.
 
 ## Support
 
