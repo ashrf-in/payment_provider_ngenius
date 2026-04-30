@@ -33,6 +33,17 @@ class PaymentProvider(models.Model):
         required_if_provider='ngenius',
         copy=False,
     )
+    ngenius_webhook_header_name = fields.Char(
+        string="Webhook Header Name",
+        help="Optional custom header name configured on the N-Genius webhook.",
+        copy=False,
+    )
+    ngenius_webhook_header_value = fields.Char(
+        string="Webhook Header Value",
+        help="Optional custom header value configured on the N-Genius webhook.",
+        copy=False,
+        groups='base.group_system',
+    )
 
     # === COMPUTE METHODS === #
 
@@ -57,6 +68,15 @@ class PaymentProvider(models.Model):
                         "You must configure both API Key and Outlet Reference before enabling "
                         "the N-Genius payment provider."
                     ))
+
+    @api.constrains('ngenius_webhook_header_name', 'ngenius_webhook_header_value')
+    def _check_ngenius_webhook_header(self):
+        """Ensure the optional webhook header configuration is complete."""
+        for provider in self.filtered(lambda p: p.code == 'ngenius'):
+            if bool(provider.ngenius_webhook_header_name) != bool(provider.ngenius_webhook_header_value):
+                raise ValidationError(_(
+                    "N-Genius webhook header name and value must either both be set or both be empty."
+                ))
 
     # === CRUD METHODS === #
 
@@ -126,7 +146,7 @@ class PaymentProvider(models.Model):
             access_token = self._ngenius_get_access_token()
 
         api_url = self._ngenius_get_api_url()
-        url = f"{api_url}{endpoint}"
+        url = endpoint if endpoint.startswith(('http://', 'https://')) else f"{api_url}{endpoint}"
 
         headers = {
             'Authorization': f'Bearer {access_token}',

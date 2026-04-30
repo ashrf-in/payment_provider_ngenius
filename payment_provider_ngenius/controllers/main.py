@@ -15,6 +15,42 @@ class NGeniusController(http.Controller):
     _return_url = '/payment/ngenius/return'
     _webhook_url = '/payment/ngenius/webhook'
 
+    @staticmethod
+    def _get_ngenius_provider_from_event(event):
+        """Return the provider matching the webhook's outlet reference."""
+        outlet_ref = event.get('outletId') or event.get('order', {}).get('outletId')
+        if not outlet_ref:
+            return request.env['payment.provider']
+
+        return request.env['payment.provider'].sudo().search([
+            ('code', '=', 'ngenius'),
+            ('ngenius_outlet_ref', '=', outlet_ref),
+        ], limit=1)
+
+    @staticmethod
+    def _is_webhook_authorized(provider_sudo):
+        """Validate the optional custom webhook header configured on the provider."""
+        header_name = provider_sudo.ngenius_webhook_header_name
+        header_value = provider_sudo.ngenius_webhook_header_value
+        if not header_name and not header_value:
+            return True
+
+        return request.httprequest.headers.get(header_name) == header_value
+
+    @staticmethod
+    def _get_latest_refund_reference(order_data):
+        """Extract the latest refund identifier from the webhook order payload."""
+        payments = order_data.get('_embedded', {}).get('payment', [])
+        if not payments:
+            return ''
+
+        refunds = payments[0].get('_embedded', {}).get(const.REFUND_REL, [])
+        if not refunds:
+            return ''
+
+        refund_href = refunds[-1].get('_links', {}).get('self', {}).get('href', '')
+        return refund_href.rstrip('/').rsplit('/', 1)[-1] if refund_href else ''
+
     @http.route(_return_url, type='http', methods=['GET'], auth='public', csrf=False)
     def ngenius_return(self, **data):
         """Process the payment data sent by N-Genius after redirection from payment.
@@ -84,22 +120,60 @@ class NGeniusController(http.Controller):
         :return: An empty string to acknowledge the notification.
         :rtype: str
         """
-        event = request.get_json_data()
-        
+        event = request.get_json_data() or {}
+
         try:
-            # Extract transaction reference and order data
-            reference = event.get('merchantOrderReference')
-            if reference:
-                tx_sudo = request.env['payment.transaction'].sudo()._search_by_reference(
-                    'ngenius', {'reference': reference}
+            event_name = event.get('eventName', '')
+            if event_name and event_name not in const.HANDLED_WEBHOOK_EVENTS:
+                _logger.info("N-Genius: Ignoring unsupported webhook event %s", event_name)
+                return request.make_json_response('')
+
+            provider_sudo = self._get_ngenius_provider_from_event(event)
+            if not provider_sudo:
+                _logger.warning("N-Genius: No provider found for webhook event %s", event_name)
+                return request.make_json_response('')
+
+            if not self._is_webhook_authorized(provider_sudo):
+                _logger.warning("N-Genius: Rejected webhook with invalid custom header")
+                return request.make_json_response({'error': 'forbidden'}, status=403)
+
+            order_data = event.get('order') or {}
+            order_ref = order_data.get('reference')
+            if not order_ref:
+                _logger.warning("N-Genius: Webhook event %s has no order reference", event_name)
+                return request.make_json_response('')
+
+            tx_domain = [('provider_code', '=', 'ngenius')]
+            if event_name in const.REFUND_WEBHOOK_EVENTS:
+                refund_ref = self._get_latest_refund_reference(order_data)
+                if not refund_ref:
+                    _logger.warning("N-Genius: Refund webhook has no refund reference for order %s", order_ref)
+                    return request.make_json_response('')
+
+                tx_domain.append(('provider_reference', '=', refund_ref))
+            else:
+                tx_domain.append(('provider_reference', '=', order_ref))
+
+            tx_sudo = request.env['payment.transaction'].sudo().search(tx_domain, limit=1)
+            if not tx_sudo:
+                _logger.warning(
+                    "N-Genius: No transaction found for webhook event=%s order_ref=%s",
+                    event_name,
+                    order_ref,
                 )
-                
-                # Process the webhook data
-                payment_data = {
-                    'reference': reference,
-                    'order_data': event,
-                }
-                tx_sudo._process('ngenius', payment_data)
+                return request.make_json_response('')
+
+            endpoint = const.ORDER_DETAIL_ENDPOINT.format(
+                outlet_ref=provider_sudo.ngenius_outlet_ref,
+                order_ref=order_ref,
+            )
+            authoritative_order_data = provider_sudo._ngenius_make_request('GET', endpoint)
+
+            payment_data = {
+                'reference': tx_sudo.reference,
+                'order_data': authoritative_order_data,
+            }
+            tx_sudo._process('ngenius', payment_data)
         except ValidationError:
             _logger.exception("Unable to process the webhook; skipping to acknowledge")
         

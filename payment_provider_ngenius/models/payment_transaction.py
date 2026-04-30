@@ -114,6 +114,45 @@ class PaymentTransaction(models.Model):
             'payment_url': payment_link,
         }
 
+    @staticmethod
+    def _ngenius_get_order_payments(order_data):
+        """Return the payments embedded in an order payload."""
+        payments = order_data.get('_embedded', {}).get('payment', [])
+        return payments if isinstance(payments, list) else []
+
+    @staticmethod
+    def _ngenius_get_payment_from_order_data(order_data):
+        """Return the first payment object from an order or a payment-shaped payload."""
+        payments = PaymentTransaction._ngenius_get_order_payments(order_data)
+        if payments:
+            return payments[0]
+
+        if order_data.get('orderReference') and order_data.get('amount'):
+            return order_data
+
+        return {}
+
+    @staticmethod
+    def _ngenius_get_refund_link_from_order_data(order_data):
+        """Return the documented refund link from the order's payment object."""
+        for payment in PaymentTransaction._ngenius_get_order_payments(order_data):
+            refund_link = payment.get('_links', {}).get(const.REFUND_REL, {}).get('href')
+            if refund_link:
+                return refund_link
+
+        return ''
+
+    @staticmethod
+    def _ngenius_get_latest_refund(payment):
+        """Return the latest embedded refund entry from a payment payload."""
+        refunds = payment.get('_embedded', {}).get(const.REFUND_REL, [])
+        return refunds[-1] if refunds else {}
+
+    @staticmethod
+    def _ngenius_extract_reference_from_href(href):
+        """Extract the trailing resource identifier from an API href."""
+        return href.rstrip('/').rsplit('/', 1)[-1] if href else ''
+
     def _send_payment_request(self):
         """Override of `payment` to send a payment request to N-Genius."""
         if self.provider_code != 'ngenius':
@@ -130,9 +169,12 @@ class PaymentTransaction(models.Model):
 
         access_token = self.provider_id._ngenius_get_access_token()
         outlet_ref = ngenius_utils.get_outlet_ref(self.provider_id.sudo())
-        
-        # Extract order and payment refs from source transaction
+
+        # Retrieve the order to discover the provider-managed refund URI.
         order_ref = self.source_transaction_id.provider_reference
+        if not order_ref:
+            raise ValidationError(_("N-Genius: Missing order reference for refund."))
+
         # Fetch order details to get payment reference
         order_endpoint = const.ORDER_DETAIL_ENDPOINT.format(
             outlet_ref=outlet_ref, order_ref=order_ref
@@ -140,26 +182,20 @@ class PaymentTransaction(models.Model):
         order_data = self.provider_id._ngenius_make_request(
             'GET', order_endpoint, access_token=access_token
         )
-        
-        # Get payment reference from order
-        embedded = order_data.get('_embedded', {})
-        payments = embedded.get('payment', [])
-        if not payments:
-            raise ValidationError(_("N-Genius: No payment found for refund"))
-        
-        payment_ref = payments[0].get('reference')
-        
-        # Create refund
-        refund_endpoint = const.REFUND_ENDPOINT.format(
-            outlet_ref=outlet_ref, order_ref=order_ref, payment_ref=payment_ref
-        )
-        
+
+        refund_endpoint = self._ngenius_get_refund_link_from_order_data(order_data)
+        if not refund_endpoint:
+            raise ValidationError(_(
+                "N-Genius: This transaction is not refundable yet. The payment must be purchased "
+                "or captured before a refund can be requested."
+            ))
+
         amount_minor = payment_utils.to_minor_currency_units(
             -self.amount,  # Refund amount is negative
             self.currency_id,
             arbitrary_decimal_number=const.CURRENCY_DECIMALS.get(self.currency_id.name, 2),
         )
-        
+
         refund_data = self.provider_id._ngenius_make_request(
             'POST',
             refund_endpoint,
@@ -202,25 +238,32 @@ class PaymentTransaction(models.Model):
             return super()._extract_amount_data(payment_data)
 
         order_data = payment_data.get('order_data', {})
-        embedded = order_data.get('_embedded', {})
-        payments = embedded.get('payment', [])
-        
-        if not payments:
+        payment = self._ngenius_get_payment_from_order_data(order_data)
+
+        if not payment:
+            if self.operation == 'refund':
+                return None
             return {'amount': 0, 'currency_code': ''}
 
-        payment = payments[0]
-        amount_data = payment.get('amount', {})
+        if self.operation == 'refund':
+            amount_data = self._ngenius_get_latest_refund(payment).get('amount', {})
+            if not amount_data:
+                return None
+        else:
+            amount_data = payment.get('amount', {})
+
         amount_minor = amount_data.get('value', 0)
-        
+
         amount = payment_utils.to_major_currency_units(
             amount_minor,
             self.currency_id,
             arbitrary_decimal_number=const.CURRENCY_DECIMALS.get(self.currency_id.name, 2),
         )
-        
+
         return {
             'amount': amount,
             'currency_code': amount_data.get('currencyCode', '').upper(),
+            'precision_digits': const.CURRENCY_DECIMALS.get(self.currency_id.name, 2),
         }
 
     def _apply_updates(self, payment_data):
@@ -229,12 +272,46 @@ class PaymentTransaction(models.Model):
             return super()._apply_updates(payment_data)
 
         order_data = payment_data.get('order_data', {})
+        payment = self._ngenius_get_payment_from_order_data(order_data)
+
+        if self.operation == 'refund':
+            if not payment:
+                self._set_error(_("N-Genius: Missing payment data in refund response."))
+                return
+
+            refund = self._ngenius_get_latest_refund(payment)
+            refund_reference = self._ngenius_extract_reference_from_href(
+                refund.get('_links', {}).get('self', {}).get('href', '')
+            )
+            if refund_reference:
+                self.provider_reference = refund_reference
+
+            refund_state = refund.get('state', '')
+            payment_state = payment.get('state', '')
+            if (
+                refund_state in const.REFUND_DONE_STATES
+                or payment_state in const.REFUND_DONE_STATES
+            ):
+                self._set_done()
+                self.env.ref('payment.cron_post_process_payment_tx')._trigger()
+            elif refund_state in const.REFUND_PENDING_STATES:
+                self._set_pending()
+            elif refund_state in const.REFUND_ERROR_STATES:
+                self._set_error(_("The refund did not go through. Please try again."))
+            else:
+                _logger.warning(
+                    "N-Genius: Received unknown refund state refund=%s payment=%s",
+                    refund_state,
+                    payment_state,
+                )
+                self._set_error(_("The refund did not go through. Please try again."))
+            return
+
         self.provider_reference = order_data.get('reference', '')
 
         # Extract payment state
-        embedded = order_data.get('_embedded', {})
-        payments = embedded.get('payment', [])
-        
+        payments = self._ngenius_get_order_payments(order_data)
+
         # Get order-level state as fallback
         order_state = order_data.get('state', '')
         
@@ -247,17 +324,16 @@ class PaymentTransaction(models.Model):
 
             
             # Check for 3DS authentication result
-            three_ds = payment.get('3ds', {})
+            three_ds = payment.get('3ds2') or payment.get('3ds', {})
             if three_ds:
                 # 3DS was attempted - check the ECI (Electronic Commerce Indicator)
                 # ECI is the TRUE indicator of authentication level:
                 # - ECI 05 (Visa) / 02 (Mastercard) = Fully Authenticated (issuer liability)
                 # - ECI 06 (Visa) / 01 (Mastercard) = Attempted but NOT authenticated (merchant liability)
                 # - ECI 07 (Visa) / 00 (Mastercard) = Not enrolled / not authenticated
-                
-                three_ds_status = three_ds.get('status', '')
+
                 three_ds_eci = three_ds.get('eci', '')
-                three_ds_summary = three_ds.get('summaryText', '')
+                three_ds_summary = three_ds.get('summaryText') or three_ds.get('transStatus', '')
                 
 
                 
@@ -291,6 +367,8 @@ class PaymentTransaction(models.Model):
                 self._set_done()
             elif state in const.STATUS_MAPPING['authorized']:
                 self._set_authorized()
+            elif state in const.STATUS_MAPPING['draft']:
+                self._set_pending()
             elif state in const.STATUS_MAPPING['pending']:
                 self._set_pending()
             elif state in const.STATUS_MAPPING['cancel']:
@@ -309,6 +387,8 @@ class PaymentTransaction(models.Model):
             # Only explicit success states should pass
             if order_state in const.ORDER_STATUS_MAPPING.get('done', ()):
                 self._set_done()
+            elif order_state in const.ORDER_STATUS_MAPPING.get('pending', ()):
+                self._set_pending()
             elif order_state in const.ORDER_STATUS_MAPPING.get('cancel', ()):
                 self._set_canceled()
             else:

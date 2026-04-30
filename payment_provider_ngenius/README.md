@@ -1,95 +1,83 @@
 # N-Genius Payment Provider for Odoo
 
-![Odoo Version](https://img.shields.io/badge/Odoo-19.0-blue)
-![License](https://img.shields.io/badge/License-LGPL--3-green)
-![N-Genius](https://img.shields.io/badge/N--Genius-Network%20International-orange)
+Accept online card payments in Odoo with N-Genius Online by Network International.
 
-A robust payment provider module for Odoo 19 that integrates **N-Genius** payment gateway by [Network International](https://www.network.ae).
+This module adds N-Genius as a payment provider in Odoo so customers can pay through a secure hosted payment page, while your team manages payment activity directly from Odoo.
 
-## Features
+## What This Module Is For
 
-✅ **Card Payments** - Accept Visa, Mastercard, and American Express  
-✅ **3D Secure (3DS2)** - Full EMV 3DS authentication with strict ECI validation  
-✅ **Sandbox & Production** - Easy switching between environments  
-✅ **Refund Support** - Process full refunds through the Odoo interface  
-✅ **Webhook Notifications** - Real-time payment status updates  
-✅ **Hosted Payment Page** - Secure redirect-based payment flow
+If your business uses N-Genius and you want to offer it as a payment option in Odoo, this module gives you a ready-to-use connection between your website checkout and your N-Genius account.
 
-## Installation
+It is built for merchants who want a simple payment experience for customers and an easy payment management flow for internal teams.
 
-1. Copy the `payment_provider_ngenius` folder to your Odoo addons directory
-2. Update the app list: **Apps → Update Apps List**
-3. Install the module: Search for "N-Genius" and click **Install**
+## Main Benefits
 
-## Configuration
+- Offer N-Genius as a payment option on checkout
+- Let customers pay on a secure hosted payment page
+- Keep payment status in sync with Odoo
+- Support test and live environments
+- Process full refunds from Odoo
+- Reduce manual payment follow-up for your team
 
-1. Go to **Invoicing → Configuration → Payment Providers**
-2. Select **N-Genius** and click **Activate**
-3. Configure your credentials:
-   - **API Key**: Your N-Genius API key from the merchant portal
-   - **Outlet Reference**: Your outlet reference ID
-4. Select **Test Mode** for sandbox or **Enabled** for production
-5. **Save** and you're ready to accept payments!
+## Customer Experience
 
-## API Credentials
+When a customer selects N-Genius during checkout, they are redirected to the N-Genius payment page to complete the payment securely. After payment, they are sent back to your Odoo website and the order payment status is updated accordingly.
 
-Get your credentials from the N-Genius merchant portal:
+This means card details are handled on the N-Genius side, giving customers a familiar and trusted payment experience.
 
-- **Sandbox**: https://merchant.sandbox.ngenius-payments.com
-- **Production**: https://merchant.ngenius-payments.com
+## Odoo Experience
 
-## 3D Secure Validation
+From Odoo, your team can:
 
-This module implements strict 3DS authentication:
+- enable or disable the provider
+- switch between sandbox and production
+- monitor payment progress
+- see successful and failed transactions
+- issue full refunds when available
 
-| ECI Value | Card Brand | Meaning                      | Result      |
-| --------- | ---------- | ---------------------------- | ----------- |
-| 05        | Visa       | Fully Authenticated          | ✅ Success  |
-| 02        | Mastercard | Fully Authenticated          | ✅ Success  |
-| 06        | Visa       | Attempted, Not Authenticated | ❌ Declined |
-| 01        | Mastercard | Attempted, Not Authenticated | ❌ Declined |
-| 07        | Visa       | Not Enrolled                 | ❌ Declined |
-| 00        | Mastercard | Not Enrolled                 | ❌ Declined |
+## Key Features
 
-## Supported Currencies
+- N-Genius payment provider for Odoo 19
+- Secure hosted checkout flow
+- Support for common card payments
+- Automatic payment status updates
+- Full refund support
+- Sandbox and production configuration
+- Easy setup from the Odoo payment provider screen
 
-The module supports all currencies enabled in your N-Genius outlet, including:
+## Best For
 
-- AED, USD, EUR, GBP, SAR, and 50+ more
+- online stores running on Odoo
+- businesses already using N-Genius Online
+- merchants who want a secure redirect payment flow
+- teams who want payment operations handled inside Odoo
 
-## Test Cards (Sandbox)
+## Simple Setup
 
-| Card Number         | Brand      | Result       |
-| ------------------- | ---------- | ------------ |
-| 4111 1111 1111 1111 | Visa       | Success      |
-| 5200 0000 0000 0007 | Mastercard | Success      |
-| 4000 0000 0000 0002 | Visa       | 3DS Required |
+1. Install the module in Odoo.
+2. Open the N-Genius payment provider settings.
+3. Add your API key and outlet reference.
+4. Choose test mode or live mode.
+5. Publish the provider and start accepting payments.
 
 ## Requirements
 
-- Odoo 19.0 (Enterprise or Community)
-- `payment` module (auto-installed)
-- `account_payment` module (auto-installed)
-- Active N-Genius merchant account
+- Odoo 19.0
+- an active N-Genius account
+- N-Genius credentials for your business account
+
+## Notes
+
+- The module uses a hosted payment page for a safer customer checkout journey.
+- Full refunds are supported.
+- Sandbox mode is available for testing before going live.
 
 ## Support
 
-- **Author**: Ashraf
-- **Website**: [www.ashrf.in](https://www.ashrf.in)
-- **GitHub**: [github.com/ashrf-in](https://github.com/ashrf-in)
-- **Issues**: Report bugs on GitHub
+- Author: Ashraf
+- Website: [www.ashrf.in](https://www.ashrf.in)
+- Support: [connect@ashrf.in](mailto:connect@ashrf.in)
 
 ## License
 
-This module is licensed under LGPL-3. See [LICENSE](LICENSE) for details.
-
-## Changelog
-
-### Version 19.0.1.0.0
-
-- Initial release for Odoo 19
-- Full 3DS2 authentication with ECI validation
-- Card payments (Visa, Mastercard, Amex)
-- Refund support
-- Webhook notifications
-- Sandbox and Production environments
+This module is released under LGPL-3. See `LICENSE` for details.
