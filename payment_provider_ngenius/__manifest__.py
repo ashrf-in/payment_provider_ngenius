@@ -40,6 +40,7 @@ valid credentials.
     'application': False,
     'auto_install': False,
     'images': [
+        'static/description/thumb.png',
         'static/description/main_screenshot.png',
         'static/description/config_screenshot.png',
         'static/description/checkout_screenshot.png',
